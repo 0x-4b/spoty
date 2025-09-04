@@ -1,0 +1,648 @@
+:root {
+    --spotify-green: #1db954;
+    --spotify-dark-green: #1aa34a;
+    --spotify-black: #191414;
+    --spotify-dark-gray: #121212;
+    --spotify-light-gray: #282828;
+    --text-primary: #ffffff;
+    --text-secondary: #b3b3b3;
+    --text-muted: #727272;
+    --sidebar-width: 240px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #191414 0%, #000000 100%);
+    color: var(--text-primary);
+    font-family: 'Circular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    line-height: 1.6;
+}
+
+/* Layout */
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: var(--sidebar-width);
+    background-color: rgba(0, 0, 0, 0.8);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    padding: 24px 0;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-header {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-brand {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 1.4rem;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-brand i {
+    color: var(--spotify-green);
+    margin-right: 12px;
+    font-size: 1.8rem;
+}
+
+.sidebar-nav {
+    padding: 24px 0;
+    flex-grow: 1;
+}
+
+.nav-item {
+    margin-bottom: 4px;
+}
+
+.nav-link {
+    color: var(--text-secondary);
+    padding: 12px 20px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    font-size: 0.95rem;
+}
+
+.nav-link:hover, .nav-link.active {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-left-color: var(--spotify-green);
+}
+
+.nav-link i {
+    margin-right: 12px;
+    font-size: 1.2rem;
+    width: 20px;
+    text-align: center;
+}
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: auto;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--spotify-green), #2a2a2a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-weight: bold;
+    color: white;
+}
+
+.user-details {
+    flex-grow: 1;
+}
+
+.user-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 2px;
+}
+
+.user-status {
+    color: var(--spotify-green);
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.user-status i {
+    margin-right: 4px;
+}
+
+.logout-btn {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.logout-btn i {
+    margin-right: 8px;
+}
+
+/* Main content */
+.main-content {
+    flex: 1;
+    margin-left: var(--sidebar-width);
+    padding: 32px;
+    min-height: 100vh;
+}
+
+.content-header {
+    margin-bottom: 32px;
+}
+
+.content-title {
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.content-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Cards */
+.card {
+    background-color: rgba(255, 255, 255, 0.03);
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.card-header {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 20px 24px;
+}
+
+.card-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+.card-title i {
+    margin-right: 12px;
+    color: var(--spotify-green);
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Forms */
+.form-control {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 14px 16px;
+    transition: all 0.2s ease;
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: var(--spotify-green);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
+}
+
+.form-control::placeholder {
+    color: var(--text-muted);
+}
+
+.input-group .btn {
+    border-radius: 0 8px 8px 0;
+    z-index: 1;
+}
+
+/* Buttons */
+.btn-spotify {
+    background-color: var(--spotify-green);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 12px 24px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-spotify:hover {
+    background-color: var(--spotify-dark-green);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(29, 185, 84, 0.3);
+}
+
+.btn-spotify:active {
+    transform: translateY(0);
+}
+
+.btn-spotify i {
+    margin-right: 8px;
+}
+
+.btn-outline-spotify {
+    color: var(--spotify-green);
+    border-color: var(--spotify-green);
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 500;
+    background: transparent;
+}
+
+.btn-outline-spotify:hover {
+    background-color: var(--spotify-green);
+    color: white;
+    border-color: var(--spotify-green);
+}
+
+/* Tracks container */
+.tracks-container {
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.track-item {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.track-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-left-color: var(--spotify-green);
+}
+
+/* Progress */
+.progress {
+    height: 6px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    background-color: var(--spotify-green);
+    transition: width 0.3s ease;
+}
+
+/* Status colors */
+.status-waiting { color: var(--text-muted); }
+.status-searching { color: #17a2b8; }
+.status-downloading { color: #1db954; }
+.status-converting { color: #ffc107; }
+.status-complete { color: var(--spotify-green); }
+.status-error { color: #f3616d; }
+.status-not_found { color: #a0a0a0; }
+.status-retrying { color: #fd7e14; }
+
+/* Alerts */
+.alert {
+    border-radius: 8px;
+    border: none;
+    padding: 16px;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.alert-danger {
+    border-left: 4px solid #f3616d;
+    color: #f3616d;
+}
+
+.alert-info {
+    border-left: 4px solid #17a2b8;
+    color: #17a2b8;
+}
+
+.text-muted {
+    color: var(--text-muted) !important;
+}
+
+/* Batch controls */
+.batch-controls {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Custom scrollbar */
+.tracks-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.tracks-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.tracks-container::-webkit-scrollbar-thumb {
+    background: var(--spotify-green);
+    border-radius: 4px;
+}
+
+.tracks-container::-webkit-scrollbar-thumb:hover {
+    background: var(--spotify-dark-green);
+}
+
+/* Downloads list */
+.downloads-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.download-item {
+    padding: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+}
+
+.download-item:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.download-item:last-child {
+    border-bottom: none;
+}
+
+/* Library items */
+.library-item {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.library-item:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(29, 185, 84, 0.3);
+}
+
+.library-img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+    margin-right: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Search results */
+.search-result {
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.search-result:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(29, 185, 84, 0.3);
+}
+
+/* Quality selector */
+.quality-selector {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 10px 16px;
+    margin-right: 12px;
+}
+
+/* Responsive design */
+.menu-toggle {
+    display: none;
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 1100;
+    background: var(--spotify-green);
+    border: none;
+    color: white;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    
+    .main-content {
+        margin-left: 0;
+        padding: 24px;
+    }
+    
+    .menu-toggle {
+        display: flex;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Tabs */
+.nav-tabs {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    border: none;
+    padding: 12px 20px;
+    background: transparent;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--spotify-green);
+    background-color: transparent;
+    border-bottom: 3px solid var(--spotify-green);
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--text-primary);
+    border-color: transparent;
+}
+
+/* Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    color: var(--spotify-green);
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    display: block;
+    color: var(--spotify-green);
+}
+
+/* Form switches */
+.form-check-input:checked {
+    background-color: var(--spotify-green);
+    border-color: var(--spotify-green);
+}
+
+/* Content sections */
+.content-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Improved focus states */
+.btn:focus,
+.form-control:focus,
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.3);
+    outline: none;
+}
+
+/* Gradient backgrounds for some elements */
+.gradient-bg {
+    background: linear-gradient(135deg, var(--spotify-green) 0%, var(--spotify-dark-green) 100%);
+}
+
+/* Hover effects */
+.hover-lift {
+    transition: transform 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+/* Text utilities */
+.text-gradient {
+    background: linear-gradient(135deg, var(--spotify-green) 0%, var(--spotify-dark-green) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Card actions */
+.card-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* Loading states */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Status indicators */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-indicator.online {
+    background-color: var(--spotify-green);
+}
+
+.status-indicator.offline {
+    background-color: var(--text-muted);
+}
+
+/* Additional responsive adjustments */
+@media (max-width: 768px) {
+    .main-content {
+        padding: 16px;
+    }
+    
+    .content-title {
+        font-size: 1.8rem;
+    }
+    
+    .card-body {
+        padding: 20px;
+    }
+}

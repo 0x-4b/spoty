@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Content Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/index.css">
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-brand">
+                <i class="bi bi-spotify"></i>Spotify Downloader
+            </a>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <div class="nav-item">
+                <a href="#" class="nav-link active" data-section="download">
+                    <i class="bi bi-download"></i> Download
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-section="search">
+                    <i class="bi bi-search"></i> Search
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-section="library">
+                    <i class="bi bi-collection-play"></i> My Library
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-section="downloads">
+                    <i class="bi bi-music-note-list"></i> My Downloads
+                </a>
+            </div>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-section="help">
+                    <i class="bi bi-question-circle"></i> Help
+                </a>
+            </div>
+        </nav>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    {% if session.spotify_user %}
+                    {{ session.spotify_user[0]|upper }}
+                    {% else %}
+                    U
+                    {% endif %}
+                </div>
+                <div class="user-details">
+                    <div class="user-name">
+                        {% if session.spotify_user %}
+                        {{ session.spotify_user }}
+                        {% else %}
+                        User
+                        {% endif %}
+                    </div>
+                    <div class="user-status">
+                        {% if session.spotify_authenticated %}
+                        <i class="bi bi-check-circle-fill"></i> Connected
+                        {% else %}
+                        <i class="bi bi-x-circle-fill"></i> Not Connected
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <a href="/logout" class="logout-btn">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
+        </div>
+    </div>
+    
+    <!-- Menu toggle for mobile -->
+    <button class="menu-toggle" id="menuToggle">
+        <i class="bi bi-list"></i>
+    </button>
+    
+    <!-- Main content -->
+    <div class="main-content">
+        <!-- Download Section -->
+        <div class="content-section" id="download-section">
+            <div class="content-header">
+                <h1 class="content-title">Download Content</h1>
+                <p class="content-subtitle">Download songs, playlists, albums, and podcasts from Spotify</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title"><i class="bi bi-link-45deg"></i> Enter Spotify URL</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">Paste a Spotify playlist, album, track, episode, or show URL</p>
+                            
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="spotifyUrl" placeholder="https://open.spotify.com/playlist/...">
+                                <button class="btn btn-spotify" type="button" id="analyzeBtn">
+                                    <i class="bi bi-search me-1"></i> Analyze
+                                </button>
+                            </div>
+                            
+                            <div id="urlError" class="alert alert-danger d-none"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4 d-none" id="contentInfoCard">
+                        <div class="card-header">
+                            <h5 class="card-title"><i class="bi bi-collection-play"></i> Content Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="mb-2" id="contentName"></h5>
+                            <p class="text-muted mb-3" id="contentMeta"></p>
+                            
+                            <div class="d-flex align-items-center mb-3">
+                                <span class="me-2">Quality:</span>
+                                <select class="quality-selector" id="qualitySelector">
+                                    <option value="128">128kbps</option>
+                                    <option value="192" selected>192kbps</option>
+                                    <option value="256">256kbps</option>
+                                    <option value="320">320kbps</option>
+                                </select>
+                            </div>
+                            
+                            <div class="batch-controls">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="text-muted">Select tracks to download</span>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-spotify btn-sm" id="selectAllBtn">
+                                            <i class="bi bi-check-all me-1"></i> Select All
+                                        </button>
+                                        <button type="button" class="btn btn-outline-spotify btn-sm" id="deselectAllBtn">
+                                            <i class="bi bi-x-circle me-1"></i> Deselect All
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="btn btn-spotify w-100" id="downloadBtn">
+                                <i class="bi bi-download me-1"></i> Download Selected
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card d-none" id="tracksCard">
+                        <div class="card-header">
+                            <h5 class="card-title"><i class="bi bi-music-note-list"></i> Tracks</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="tracks-container p-3" id="tracksList"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title"><i class="bi bi-graph-up"></i> Download Progress</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="progressArea" class="mt-3">
+                                <div class="text-center text-muted py-4">No active downloads</div>
+                            </div>
+                            <div id="resultsArea" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search Section -->
+        <div class="content-section d-none" id="search-section">
+            <div class="content-header">
+                <h1 class="content-title">Search Spotify</h1>
+                <p class="content-subtitle">Search for music on Spotify</p>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title"><i class="bi bi-spotify"></i> Spotify Search</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="spotifySearchQuery" placeholder="Search for songs, artists, albums...">
+                                <button class="btn btn-spotify" type="button" id="spotifySearchBtn">
+                                    <i class="bi bi-search"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="spotifySearchResults" class="mt-3">
+                                <ul class="nav nav-tabs" id="search-tabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="tracks-tab" data-bs-toggle="tab" data-bs-target="#tracks-content" type="button" role="tab" aria-controls="tracks-content" aria-selected="true">Tracks</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="albums-tab" data-bs-toggle="tab" data-bs-target="#albums-content" type="button" role="tab" aria-controls="albums-content" aria-selected="false">Albums</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="playlists-tab" data-bs-toggle="tab" data-bs-target="#playlists-content" type="button" role="tab" aria-controls="playlists-content" aria-selected="false">Playlists</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="artists-tab" data-bs-toggle="tab" data-bs-target="#artists-content" type="button" role="tab" aria-controls="artists-content" aria-selected="false">Artists</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content" id="search-tabs-content">
+                                    <div class="tab-pane fade show active" id="tracks-content" role="tabpanel" aria-labelledby="tracks-tab"></div>
+                                    <div class="tab-pane fade" id="albums-content" role="tabpanel" aria-labelledby="albums-tab"></div>
+                                    <div class="tab-pane fade" id="playlists-content" role="tabpanel" aria-labelledby="playlists-tab"></div>
+                                    <div class="tab-pane fade" id="artists-content" role="tabpanel" aria-labelledby="artists-tab"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Library Section -->
+        <div class="content-section d-none" id="library-section">
+            <div class="content-header">
+                <h1 class="content-title">My Library</h1>
+                <p class="content-subtitle">Your Spotify playlists and saved tracks</p>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="bi bi-music-note-list"></i> My Playlists</h5>
+                </div>
+                <div class="card-body">
+                    <div id="playlistsList" class="library-list"></div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="bi bi-heart"></i> Liked Songs</h5>
+                </div>
+                <div class="card-body">
+                    <div id="savedTracksList" class="library-list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Downloads Section -->
+        <div class="content-section d-none" id="downloads-section">
+            <div class="content-header">
+                <h1 class="content-title">My Downloads</h1>
+                <p class="content-subtitle">Previously downloaded files</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="bi bi-folder2-open"></i> Downloaded Files</h5>
+                </div>
+                <div class="card-body">
+                    <div id="downloadsList" class="downloads-list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="content-section d-none" id="help-section">
+            <div class="content-header">
+                <h1 class="content-title">Help & Instructions</h1>
+                <p class="content-subtitle">How to use the Spotify Downloader</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title"><i class="bi bi-info-circle"></i> Getting Started</h5>
+                </div>
+                <div class="card-body">
+                    <h6>How to download content:</h6>
+                    <ol class="mb-4">
+                        <li>Copy the Spotify URL of the content you want to download (playlist, album, track, episode, or show)</li>
+                        <li>Paste the URL in the input field and click "Analyze"</li>
+                        <li>Select the tracks you want to download</li>
+                        <li>Click "Download Selected" to start the download process</li>
+                    </ol>
+                    
+                    <h6>Supported content types:</h6>
+                    <ul>
+                        <li>Playlists</li>
+                        <li>Albums</li>
+                        <li>Individual tracks</li>
+                        <li>Podcast episodes</li>
+                        <li>Podcast shows</li>
+                    </ul>
+                    
+                    <h6>Additional features:</h6>
+                    <ul>
+                        <li>Search for content directly within the app</li>
+                        <li>Browse your personal Spotify library</li>
+                        <li>Choose audio quality (128kbps to 320kbps)</li>
+                        <li>Automatic metadata and cover art embedding</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentTracks = [];
+        let downloadId = null;
+        let currentDownloadId = null;
+        
+        // DOM elements
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        
+        // Toggle sidebar on mobile
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+        
+        // Navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Update active link
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                // Show corresponding section
+                const section = link.getAttribute('data-section');
+                contentSections.forEach(s => s.classList.add('d-none'));
+                document.getElementById(`${section}-section`).classList.remove('d-none');
+                
+                // Load content if needed
+                if (section === 'downloads') {
+                    loadDownloads();
+                } else if (section === 'library') {
+                    loadLibrary();
+                } else if (section === 'search') {
+                    // Clear search results when switching to search tab
+                    document.getElementById('spotifySearchResults').innerHTML = '';
+                }
+                
+                // Close sidebar on mobile after selection
+                if (window.innerWidth < 992) {
+                    sidebar.classList.remove('open');
+                }
+            });
+        });
+        
+        // Download functionality
+        document.getElementById('analyzeBtn').addEventListener('click', analyzeUrl);
+        document.getElementById('downloadBtn').addEventListener('click', startDownload);
+        document.getElementById('selectAllBtn').addEventListener('click', () => toggleAllSelection(true));
+        document.getElementById('deselectAllBtn').addEventListener('click', () => toggleAllSelection(false));
+        
+        // Search functionality
+        document.getElementById('spotifySearchBtn').addEventListener('click', searchSpotify);
+        
+        function analyzeUrl() {
+            const url = document.getElementById('spotifyUrl').value.trim();
+            const errorDiv = document.getElementById('urlError');
+            
+            if (!url) {
+                errorDiv.textContent = 'Please enter a Spotify URL';
+                errorDiv.classList.remove('d-none');
+                return;
+            }
+            
+            errorDiv.classList.add('d-none');
+            
+            fetch('/api/analyze', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ url: url })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.classList.remove('d-none');
+                    return;
+                }
+                
+                // Show content info
+                document.getElementById('contentName').textContent = data.content_info.name;
+                
+                let metaText = `${data.content_info.type.charAt(0).toUpperCase() + data.content_info.type.slice(1)} • ${data.content_info.total_tracks} items`;
+                if (data.content_info.owner) {
+                    metaText += ` • By ${data.content_info.owner}`;
+                } else if (data.content_info.artists) {
+                    metaText += ` • By ${data.content_info.artists.join(', ')}`;
+                }
+                
+                document.getElementById('contentMeta').textContent = metaText;
+                document.getElementById('contentInfoCard').classList.remove('d-none');
+                
+                // Show tracks
+                currentTracks = data.tracks;
+                renderTracks(data.tracks);
+                document.getElementById('tracksCard').classList.remove('d-none');
+            })
+            .catch(error => {
+                errorDiv.textContent = 'Error analyzing URL: ' + error;
+                errorDiv.classList.remove('d-none');
+            });
+        }
+        
+        function searchSpotify() {
+            const query = document.getElementById('spotifySearchQuery').value.trim();
+            const resultsDiv = document.getElementById('spotifySearchResults');
+            const tracksDiv = document.getElementById('tracks-content');
+            const albumsDiv = document.getElementById('albums-content');
+            const playlistsDiv = document.getElementById('playlists-content');
+            const artistsDiv = document.getElementById('artists-content');
+            
+            if (!query) {
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Please enter a search query</div>';
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Searching...</span></div><p class="mt-2">Searching...</p></div>';
+            
+            fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                        return;
+                    }
+                    
+                    resultsDiv.innerHTML = ''; // Clear searching message
+
+                    // Show tracks
+                    if (data.tracks && data.tracks.length > 0) {
+                        let html = '';
+                        data.tracks.forEach(track => {
+                            html += `
+                                <div class="search-result">
+                                    <div class="d-flex align-items-center">
+                                        ${track.image ? `<img src="${track.image}" class="library-img" alt="${track.name}">` : '<div class="library-img bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-music-note-beamed"></i></div>'}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">${track.name}</h6>
+                                            <small class="text-muted">${track.artists.join(', ')} • ${track.album}</small>
+                                        </div>
+                                        <button class="btn btn-outline-spotify btn-sm" data-url="${track.url}">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        tracksDiv.innerHTML = html;
+                    } else {
+                        tracksDiv.innerHTML = '<div class="empty-state"><i class="bi bi-music-note-beamed"></i><p>No tracks found</p></div>';
+                    }
+                    
+                    // Show albums
+                    if (data.albums && data.albums.length > 0) {
+                        let html = '';
+                        data.albums.forEach(album => {
+                            html += `
+                                <div class="search-result">
+                                    <div class="d-flex align-items-center">
+                                        ${album.image ? `<img src="${album.image}" class="library-img" alt="${album.name}">` : '<div class="library-img bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-disc"></i></div>'}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">${album.name}</h6>
+                                            <small class="text-muted">${album.artists.join(', ')} • ${album.release_date.split('-')[0]}</small>
+                                        </div>
+                                        <button class="btn btn-outline-spotify btn-sm" data-url="${album.url}">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        albumsDiv.innerHTML = html;
+                    } else {
+                        albumsDiv.innerHTML = '<div class="empty-state"><i class="bi bi-disc"></i><p>No albums found</p></div>';
+                    }
+                    
+                    // Show playlists
+                    if (data.playlists && data.playlists.length > 0) {
+                        let html = '';
+                        data.playlists.forEach(playlist => {
+                            html += `
+                                <div class="search-result">
+                                    <div class="d-flex align-items-center">
+                                        ${playlist.image ? `<img src="${playlist.image}" class="library-img" alt="${playlist.name}">` : '<div class="library-img bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-music-note-list"></i></div>'}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">${playlist.name}</h6>
+                                            <small class="text-muted">By ${playlist.owner} • ${playlist.tracks_count} tracks</small>
+                                        </div>
+                                        <button class="btn btn-outline-spotify btn-sm" data-url="${playlist.url}">
+                                            <i class="bi bi-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        playlistsDiv.innerHTML = html;
+                    } else {
+                        playlistsDiv.innerHTML = '<div class="empty-state"><i class="bi bi-music-note-list"></i><p>No playlists found</p></div>';
+                    }
+                    
+                    // Show artists
+                    if (data.artists && data.artists.length > 0) {
+                        let html = '';
+                        data.artists.forEach(artist => {
+                            html += `
+                                <div class="search-result">
+                                    <div class="d-flex align-items-center">
+                                        ${artist.image ? `<img src="${artist.image}" class="library-img" alt="${artist.name}">` : '<div class="library-img bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-person"></i></div>'}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">${artist.name}</h6>
+                                        </div>
+                                        <button class="btn btn-outline-spotify btn-sm view-artist-tracks" data-artist-id="${artist.id}" data-artist-name="${artist.name}">
+                                            <i class="bi bi-music-note-list"></i> View Tracks
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        artistsDiv.innerHTML = html;
+                    } else {
+                        artistsDiv.innerHTML = '<div class="empty-state"><i class="bi bi-person"></i><p>No artists found</p></div>';
+                    }
+
+                    // Add event listeners to download buttons
+                    document.querySelectorAll('#spotifySearchResults .search-result button[data-url]').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const url = e.currentTarget.getAttribute('data-url');
+                            document.getElementById('spotifyUrl').value = url;
+                            // Switch to download section
+                            navLinks.forEach(l => l.classList.remove('active'));
+                            document.querySelector('[data-section="download"]').classList.add('active');
+                            contentSections.forEach(s => s.classList.add('d-none'));
+                            document.getElementById('download-section').classList.remove('d-none');
+                            analyzeUrl();
+                        });
+                    });
+
+                    // Add event listeners to view artist tracks buttons
+                    document.querySelectorAll('.view-artist-tracks').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            const artistId = e.currentTarget.getAttribute('data-artist-id');
+                            const artistName = e.currentTarget.getAttribute('data-artist-name');
+                            getArtistTopTracks(artistId, artistName);
+                        });
+                    });
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+                });
+        }
+
+        function getArtistTopTracks(artistId, artistName) {
+            // Switch to download section
+            navLinks.forEach(l => l.classList.remove('active'));
+            document.querySelector('[data-section="download"]').classList.add('active');
+            contentSections.forEach(s => s.classList.add('d-none'));
+            document.getElementById('download-section').classList.remove('d-none');
+
+            // Show loading state
+            document.getElementById('contentName').textContent = `Top Tracks for ${artistName}`;
+            document.getElementById('contentMeta').textContent = 'Loading...';
+            document.getElementById('contentInfoCard').classList.remove('d-none');
+            document.getElementById('tracksCard').classList.remove('d-none');
+            document.getElementById('tracksList').innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2">Loading tracks...</p></div>';
+
+            fetch(`/api/artist/${artistId}/top-tracks`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    currentTracks = data;
+                    renderTracks(data);
+                    document.getElementById('contentMeta').textContent = `${data.length} tracks`;
+                })
+                .catch(error => {
+                    alert('Error fetching artist tracks: ' + error);
+                });
+        }
+        
+        function renderTracks(tracks) {
+            const tracksList = document.getElementById('tracksList');
+            tracksList.innerHTML = '';
+            
+            tracks.forEach((track, index) => {
+                const trackEl = document.createElement('div');
+                trackEl.className = 'track-item';
+                track.track_number = index + 1;
+                trackEl.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0">${track.name}</h6>
+                            <small class="text-muted">${track.artists.join(', ')}</small>
+                        </div>
+                        <div class="form-check form-switch ms-3">
+                            <input class="form-check-input track-checkbox" type="checkbox" 
+                                   data-track-num="${track.track_number}" checked role="switch">
+                        </div>
+                    </div>
+                `;
+                tracksList.appendChild(trackEl);
+            });
+        }
+        
+        function toggleAllSelection(select) {
+            const checkboxes = document.querySelectorAll('.track-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = select;
+            });
+        }
+        
+        function startDownload() {
+            const selectedTracks = currentTracks.filter(track => {
+                const checkbox = document.querySelector(`.track-checkbox[data-track-num="${track.track_number}"]`);
+                return checkbox.checked;
+            });
+            
+            if (selectedTracks.length === 0) {
+                alert('Please select at least one track to download');
+                return;
+            }
+            
+            const quality = document.getElementById('qualitySelector').value;
+            
+            fetch('/api/download', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ tracks: selectedTracks, quality: quality })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error: ' + data.error);
+                    return;
+                }
+                
+                downloadId = data.download_id;
+                currentDownloadId = data.download_id;
+                startProgressPolling();
+            })
+            .catch(error => {
+                alert('Error starting download: ' + error);
+            });
+        }
+        
+        function startProgressPolling() {
+            const progressArea = document.getElementById('progressArea');
+            progressArea.innerHTML = '<div class="text-center text-muted py-4">Waiting for download to start...</div>';
+            
+            const progressInterval = setInterval(() => {
+                fetch('/api/progress')
+                    .then(response => response.json())
+                    .then(data => {
+                        renderProgress(data);
+                        
+                        if (!data.active && Object.keys(data.progress).length === 0) {
+                            clearInterval(progressInterval);
+                            showResults(data.results);
+                            loadDownloads();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching progress:', error);
+                    });
+            }, 2000);
+        }
+        
+        function renderProgress(data) {
+            const progressArea = document.getElementById('progressArea');
+            
+            if (Object.keys(data.progress).length === 0) {
+                progressArea.innerHTML = '<div class="text-center text-muted py-4">No active downloads</div>';
+                return;
+            }
+            
+            let html = '';
+            
+            for (const [dlId, tracks] of Object.entries(data.progress)) {
+                html += `<h6 class="mb-3">Download Session</h6>`;
+                
+                let completed = 0;
+                let total = Object.keys(tracks).length;
+                
+                for (const [trackNum, progress] of Object.entries(tracks)) {
+                    const track = currentTracks.find(t => t.track_number == trackNum);
+                    const trackName = track ? track.name : `Track ${trackNum}`;
+                    
+                    if (progress.status === 'complete') completed++;
+                    
+                    let progressWidth = 0;
+                    if (progress.status === 'complete') {
+                        progressWidth = 100;
+                    } else if (progress.status === 'error' || progress.status === 'not_found') {
+                        progressWidth = 100;
+                    } else if (progress.status === 'downloading') {
+                        progressWidth = progress.percent || 50;
+                    } else if (progress.status === 'converting') {
+                        progressWidth = 75;
+                    } else if (progress.status === 'searching') {
+                        progressWidth = 25;
+                    }
+                    
+                    html += `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small text-truncate" style="max-width: 60%">${trackName}</span>
+                                <span class="small status-${progress.status}">${progress.message}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: ${progressWidth}%"></div>
+                            </div>
+                            ${progress.details ? `<small class="text-muted">${progress.details}</small>` : ''}
+                        </div>
+                    `;
+                }
+                
+                html = `
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="small">Overall Progress</span>
+                            <span class="small">${completed}/${total}</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar" role="progressbar" 
+                                 style="width: ${(completed/total)*100}%"></div>
+                        </div>
+                    </div>
+                ` + html;
+            }
+            
+            progressArea.innerHTML = html;
+        }
+        
+        function showResults(results) {
+            const resultsArea = document.getElementById('resultsArea');
+            
+            if (Object.keys(results).length === 0) {
+                resultsArea.innerHTML = '';
+                return;
+            }
+            
+            let html = '<h6>Download Results</h6>';
+            
+            for (const [dlId, result] of Object.entries(results)) {
+                html += `
+                    <div class="mb-2">
+                        <div class="text-success">✓ Success: ${result.success}</div>
+                        <div class="text-danger">✗ Failed: ${result.failed}</div>
+                        <div class="text-muted">🔍 Not found: ${result.not_found}</div>
+                        ${result.cancelled > 0 ? `<div class="text-warning">⏹ Cancelled: ${result.cancelled}</div>` : ''}
+                    </div>
+                `;
+            }
+            
+            resultsArea.innerHTML = html;
+        }
+        
+        function loadDownloads() {
+            fetch('/api/downloads')
+                .then(response => response.json())
+                .then(files => {
+                    const downloadsList = document.getElementById('downloadsList');
+                    
+                    if (files.length === 0) {
+                        downloadsList.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No downloads yet</p></div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    files.forEach(file => {
+                        html += `
+                            <div class="download-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${file.name}</h6>
+                                        <small class="text-muted">${file.size_formatted} • ${file.date}</small>
+                                    </div>
+                                    <a href="/downloads/${file.session_id}/${file.name}" class="btn btn-outline-spotify btn-sm">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    downloadsList.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error('Error loading downloads:', error);
+                });
+        }
+        
+        function loadLibrary() {
+            // Load playlists
+            fetch('/api/my_playlists')
+                .then(response => response.json())
+                .then(playlists => {
+                    const playlistsList = document.getElementById('playlistsList');
+                    
+                    if (playlists.error) {
+                        playlistsList.innerHTML = `<div class="alert alert-danger">${playlists.error}</div>`;
+                        return;
+                    }
+                    
+                    if (playlists.length === 0) {
+                        playlistsList.innerHTML = '<div class="empty-state"><i class="bi bi-inbox"></i><p>No playlists found</p></div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    playlists.forEach(playlist => {
+                        html += `
+                            <div class="library-item" data-url="https://open.spotify.com/playlist/${playlist.id}">
+                                <div class="d-flex align-items-center">
+                                    ${playlist.image ? `<img src="${playlist.image}" class="library-img" alt="${playlist.name}">` : '<div class="library-img bg-secondary d-flex align-items-center justify-content-center"><i class="bi bi-music-note-list"></i></div>'}
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${playlist.name}</h6>
+                                        <small class="text-muted">By ${playlist.owner} • ${playlist.tracks} tracks</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    playlistsList.innerHTML = html;
+                    
+                    // Add event listeners
+                    document.querySelectorAll('#playlistsList .library-item').forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            const url = e.currentTarget.getAttribute('data-url');
+                            document.getElementById('spotifyUrl').value = url;
+                            // Switch to download section
+                            navLinks.forEach(l => l.classList.remove('active'));
+                            document.querySelector('[data-section="download"]').classList.add('active');
+                            contentSections.forEach(s => s.classList.add('d-none'));
+                            document.getElementById('download-section').classList.remove('d-none');
+                            analyzeUrl();
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading playlists:', error);
+                });
+            
+            // Load saved tracks
+            fetch('/api/my_saved_tracks')
+                .then(response => response.json())
+                .then(tracks => {
+                    const savedTracksList = document.getElementById('savedTracksList');
+                    
+                    if (tracks.error) {
+                        savedTracksList.innerHTML = `<div class="alert alert-danger">${tracks.error}</div>`;
+                        return;
+                    }
+                    
+                    if (tracks.length === 0) {
+                        savedTracksList.innerHTML = '<div class="empty-state"><i class="bi bi-heart"></i><p>No liked songs found</p></div>';
+                        return;
+                    }
+                    
+                    let html = `
+                        <div class="library-item" data-url="spotify:user:liked">
+                            <div class="d-flex align-items-center">
+                                <div class="library-img bg-danger d-flex align-items-center justify-content-center">
+                                    <i class="bi bi-heart-fill text-white"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-0">Liked Songs</h6>
+                                    <small class="text-muted">${tracks.length} tracks</small>
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                                </div>
+                        </div>
+                    `;
+                    
+                    savedTracksList.innerHTML = html;
+                    
+                    // Add event listener
+                    document.querySelector('#savedTracksList .library-item').addEventListener('click', (e) => {
+                        // Show tracks in download section
+                        navLinks.forEach(l => l.classList.remove('active'));
+                        document.querySelector('[data-section="download"]').classList.add('active');
+                        contentSections.forEach(s => s.classList.add('d-none'));
+                        document.getElementById('download-section').classList.remove('d-none');
+                        
+                        // Show content info
+                        document.getElementById('contentName').textContent = 'Liked Songs';
+                        document.getElementById('contentMeta').textContent = `Playlist • ${tracks.length} items • By You`;
+                        document.getElementById('contentInfoCard').classList.remove('d-none');
+                        
+                        // Show tracks
+                        currentTracks = tracks;
+                        renderTracks(tracks);
+                        document.getElementById('tracksCard').classList.remove('d-none');
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading saved tracks:', error);
+                });
+        }
+        
+        // Initialize
+        loadDownloads();
+        loadLibrary();
+    </script>
+</body>
+</html>
+
