@@ -1,0 +1,7 @@
+.flask_session
+.spotify_cache
+downloads
+temp
+__pycache__/
+*.pyc
+.env
