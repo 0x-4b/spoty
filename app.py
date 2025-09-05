@@ -833,6 +833,27 @@ def download_zip_file(filename):
         download_name=filename
     )
 
+@app.route('/download_zip/<download_id>')
+@password_required
+def download_zip(download_id):
+    """Serve the zip file for a given download ID."""
+    global download_manager
+    result = download_manager['results'].get(int(download_id))
+    if not result or 'zip_filename' not in result:
+        return "Download not found or not complete.", 404
+    
+    zip_filename = result['zip_filename']
+    file_path = os.path.join(app.config['DOWNLOAD_FOLDER'], zip_filename)
+    
+    if not os.path.exists(file_path):
+        return "File not found", 404
+    
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=zip_filename
+    )
+
 @app.route('/downloads/<download_id>/<path:filename>')
 @password_required
 def download_file(download_id, filename):
