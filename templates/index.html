@@ -347,7 +347,10 @@
                     loadLibrary();
                 } else if (section === 'search') {
                     // Clear search results when switching to search tab
-                    document.getElementById('spotifySearchResults').innerHTML = '';
+                    const tabPanes = document.querySelectorAll('#search-tabs-content .tab-pane');
+                    tabPanes.forEach(pane => {
+                        pane.innerHTML = '';
+                    });
                 }
                 
                 // Close sidebar on mobile after selection
@@ -424,23 +427,28 @@
             const albumsDiv = document.getElementById('albums-content');
             const playlistsDiv = document.getElementById('playlists-content');
             const artistsDiv = document.getElementById('artists-content');
-            
+
             if (!query) {
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Please enter a search query</div>';
                 return;
             }
-            
-            resultsDiv.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Searching...</span></div><p class="mt-2">Searching...</p></div>';
-            
+
+            const searchingHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Searching...</span></div><p class="mt-2">Searching...</p></div>';
+            tracksDiv.innerHTML = searchingHTML;
+            albumsDiv.innerHTML = searchingHTML;
+            playlistsDiv.innerHTML = searchingHTML;
+            artistsDiv.innerHTML = searchingHTML;
+
             fetch(`/api/search?q=${encodeURIComponent(query)}&limit=10`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        resultsDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                        const errorHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                        tracksDiv.innerHTML = errorHTML;
+                        albumsDiv.innerHTML = '';
+                        playlistsDiv.innerHTML = '';
+                        artistsDiv.innerHTML = '';
                         return;
                     }
-                    
-                    resultsDiv.innerHTML = ''; // Clear searching message
 
                     // Show tracks
                     if (data.tracks && data.tracks.length > 0) {
@@ -465,7 +473,7 @@
                     } else {
                         tracksDiv.innerHTML = '<div class="empty-state"><i class="bi bi-music-note-beamed"></i><p>No tracks found</p></div>';
                     }
-                    
+
                     // Show albums
                     if (data.albums && data.albums.length > 0) {
                         let html = '';
@@ -489,7 +497,7 @@
                     } else {
                         albumsDiv.innerHTML = '<div class="empty-state"><i class="bi bi-disc"></i><p>No albums found</p></div>';
                     }
-                    
+
                     // Show playlists
                     if (data.playlists && data.playlists.length > 0) {
                         let html = '';
@@ -513,7 +521,7 @@
                     } else {
                         playlistsDiv.innerHTML = '<div class="empty-state"><i class="bi bi-music-note-list"></i><p>No playlists found</p></div>';
                     }
-                    
+
                     // Show artists
                     if (data.artists && data.artists.length > 0) {
                         let html = '';
@@ -561,7 +569,11 @@
                     });
                 })
                 .catch(error => {
-                    resultsDiv.innerHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+                    const errorHTML = `<div class="alert alert-danger">Error: ${error}</div>`;
+                    tracksDiv.innerHTML = errorHTML;
+                    albumsDiv.innerHTML = '';
+                    playlistsDiv.innerHTML = '';
+                    artistsDiv.innerHTML = '';
                 });
         }
 

@@ -433,7 +433,7 @@ class SpotifyDownloader:
             status_queue.put({
                 'track_number': track_info['track_number'],
                 'status': 'searching',
-                'message': 'Searching...',
+                'message': 'Searching...', 
                 'percent': 0
             })
             
@@ -497,7 +497,7 @@ class SpotifyDownloader:
                     status_queue.put({
                         'track_number': track_info['track_number'],
                         'status': 'converting',
-                        'message': 'Converting...',
+                        'message': 'Converting...', 
                         'percent': 75
                     })
             
@@ -539,7 +539,7 @@ class SpotifyDownloader:
                 status_queue.put({
                     'track_number': track_info['track_number'],
                     'status': 'downloading',
-                    'message': 'Downloading...',
+                    'message': 'Downloading...', 
                     'percent': 25
                 })
                 
@@ -608,7 +608,7 @@ download_manager = {
     'files': {}  # Track files for each download session
 }
 
-def download_worker(tracks, download_id, quality='192'):
+def download_worker(tracks, download_id, quality='192', content_name='download'):
     """Background worker for downloading tracks"""
     global download_manager
     
@@ -627,7 +627,7 @@ def download_worker(tracks, download_id, quality='192'):
     for track in tracks:
         download_manager['progress'][download_id][track['track_number']] = {
             'status': 'waiting',
-            'message': 'Waiting...',
+            'message': 'Waiting...', 
             'details': '',
             'percent': 0
         }
@@ -679,7 +679,19 @@ def download_worker(tracks, download_id, quality='192'):
                 future.result()
             except Exception as e:
                 print(f"Error in download: {e}")
-    
+
+    # Create a zip archive of the downloaded files
+    if download_manager['results'][download_id]['success'] > 0:
+        zip_filename_base = downloader.sanitize_filename(content_name)
+        zip_filepath = os.path.join(app.config['DOWNLOAD_FOLDER'], f"{zip_filename_base}_{download_id}")
+        
+        try:
+            shutil.make_archive(zip_filepath, 'zip', session_folder)
+            zip_filename = f"{zip_filename_base}_{download_id}.zip"
+            download_manager['results'][download_id]['zip_filename'] = zip_filename
+        except Exception as e:
+            print(f"Error creating zip archive: {e}")
+
     download_manager['active'] = False
 
 @app.route('/api/analyze', methods=['POST'])
@@ -806,6 +818,20 @@ def callback():
         
     except Exception as e:
         return f"Authentication error: {str(e)}", 400
+
+@app.route('/download_zip/<path:filename>')
+@password_required
+def download_zip_file(filename):
+    """Serve the zip file"""
+    file_path = os.path.join(app.config['DOWNLOAD_FOLDER'], filename)
+    if not os.path.exists(file_path):
+        return "File not found", 404
+    
+    return send_file(
+        file_path,
+        as_attachment=True,
+        download_name=filename
+    )
 
 @app.route('/downloads/<download_id>/<path:filename>')
 @password_required
