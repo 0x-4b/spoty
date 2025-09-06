@@ -586,14 +586,20 @@ def download_worker(tracks, download_id, quality='192', content_name='download')
     session_folder = os.path.join(app.config['DOWNLOAD_FOLDER'], str(download_id))
     os.makedirs(session_folder, exist_ok=True)
     
-    # Initialize progress
+    # Initialize progress - FIXED VERSION
     for track in tracks:
-        download_manager['progress'][download_id][track['track_number']] = {
+        # Ensure the track_number key exists before accessing it
+        if download_id not in download_manager['progress']:
+            download_manager['progress'][download_id] = {}
+        
+        # Use setdefault to ensure the track_number entry exists
+        download_manager['progress'][download_id].setdefault(track['track_number'], {
             'status': 'waiting',
             'message': 'Waiting...', 
             'details': '',
             'percent': 0
-        }
+        })
+    
     
     downloader = SpotifyDownloader()
     status_queue = download_manager['status_queue']
