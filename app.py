@@ -52,7 +52,7 @@ SPOTIFY_SCOPE = "user-library-read playlist-read-private user-read-private user-
 CACHE_FOLDER = './.spotify_cache/'
 
 # Password protection (change this to your desired password)
-APP_PASSWORD_HASH = generate_password_hash(os.environ.get('APP_PASSWORD', 'your_password_here'))
+APP_PASSWORD_HASH = generate_password_hash(os.environ.get('APP_PASSWORD'))
 
 def password_required(f):
     @wraps(f)
