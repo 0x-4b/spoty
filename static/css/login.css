@@ -1,170 +1,229 @@
+/* Login Page - Clean Spotify Style */
+
 :root {
-    --primary-bg: #1a1d2d;
-    --secondary-bg: #2a2d3d;
-    --primary-accent: #00f5d4;
-    --secondary-accent: #4cc9f0;
-    --primary-text: #ffffff;
-    --secondary-text: #a9a9a9;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.2);
-    --error-color: #f44336;
-    --border-radius: 12px;
+  --spotify-green: #1db954;
+  --spotify-green-hover: #1ed760;
+  --spotify-black: #191414;
+  --spotify-dark-grey: #121212;
+  --spotify-grey: #1a1a1a;
+  --spotify-light-grey: #282828;
+  --spotify-text: #ffffff;
+  --spotify-text-muted: #b3b3b3;
+  --border-radius: 12px;
+  --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --transition: all 0.3s ease;
 }
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  box-sizing: border-box;
 }
 
 body {
-    background: linear-gradient(135deg, var(--primary-bg) 0%, #11131f 100%);
-    color: var(--primary-text);
-    font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: linear-gradient(135deg, var(--spotify-dark-grey) 0%, var(--spotify-black) 100%);
+  color: var(--spotify-text);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Background gradient overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(ellipse at center, rgba(29, 185, 84, 0.1) 0%, transparent 70%);
+  z-index: -1;
 }
 
 .login-container {
-    width: 100%;
-    max-width: 420px;
+  width: 100%;
+  max-width: 450px;
+  padding: 20px;
 }
 
 .login-card {
-    background-color: rgba(26, 29, 45, 0.7);
-    border-radius: var(--border-radius);
-    padding: 45px 35px;
-    box-shadow: 0 15px 30px var(--shadow-color);
-    text-align: center;
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--border-color);
-    animation: fadeIn 0.6s ease-out, slideIn 0.6s ease-out;
+  background: rgba(40, 40, 40, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius);
+  padding: 48px 40px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.6s ease-out;
 }
 
-.login-logo {
-    font-size: 4rem;
-    color: var(--primary-accent);
-    margin-bottom: 20px;
-    animation: pulse 2.5s infinite ease-in-out;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.08); }
-    100% { transform: scale(1); }
+.login-logo i {
+  font-size: 4rem;
+  color: var(--spotify-green);
+  margin-bottom: 24px;
+  display: block;
 }
 
 .login-title {
-    color: var(--primary-text);
-    font-weight: 800;
-    font-size: 2.2rem;
-    margin-bottom: 10px;
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 8px;
+  color: var(--spotify-text);
 }
 
 .login-subtitle {
-    color: var(--secondary-text);
-    margin-bottom: 35px;
-    font-size: 1.1rem;
+  color: var(--spotify-text-muted);
+  font-size: 1.1rem;
+  margin-bottom: 32px;
+  font-weight: 400;
 }
 
+/* Form */
 .form-group {
-    margin-bottom: 22px;
-    text-align: left;
+  margin-bottom: 24px;
 }
 
 .form-control {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
-    color: var(--primary-text);
-    border-radius: var(--border-radius);
-    padding: 16px 18px;
-    width: 100%;
-    transition: all 0.3s ease;
-    font-size: 1rem;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--border-radius);
+  color: var(--spotify-text);
+  font-size: 1rem;
+  padding: 16px 20px;
+  transition: var(--transition);
 }
 
 .form-control:focus {
-    background-color: rgba(255, 255, 255, 0.1);
-    border-color: var(--primary-accent);
-    color: var(--primary-text);
-    box-shadow: 0 0 0 4px rgba(0, 245, 212, 0.2);
-    outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: var(--spotify-green);
+  color: var(--spotify-text);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
 }
 
 .form-control::placeholder {
-    color: var(--secondary-text);
+  color: var(--spotify-text-muted);
+}
+
+/* Buttons */
+.btn {
+  width: 100%;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 16px 24px;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  cursor: pointer;
 }
 
 .btn-spotify {
-    background: linear-gradient(135deg, var(--primary-accent) 0%, var(--secondary-accent) 100%);
-    color: var(--primary-bg);
-    border: none;
-    border-radius: 50px;
-    padding: 16px 30px;
-    font-weight: 700;
-    transition: all 0.3s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    font-size: 1.1rem;
-    box-shadow: 0 4px 15px rgba(0, 245, 212, 0.2);
+  background: var(--spotify-green);
+  color: white;
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.3);
 }
 
 .btn-spotify:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(0, 245, 212, 0.3);
+  background: var(--spotify-green-hover);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
 }
 
-.btn-spotify:active {
-    transform: translateY(0);
-    box-shadow: 0 4px 15px rgba(0, 245, 212, 0.2);
+.btn-spotify:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.btn-spotify i {
-    margin-right: 12px;
-    font-size: 1.2rem;
-}
-
+/* Alert */
 .alert {
-    border-radius: var(--border-radius);
-    border: none;
-    padding: 18px;
-    margin-bottom: 25px;
-    background-color: rgba(244, 67, 54, 0.1);
-    text-align: left;
-    border-left: 4px solid var(--error-color);
-    color: var(--error-color);
-    font-weight: 500;
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: var(--border-radius);
+  border: none;
+  display: flex;
+  align-items: center;
 }
 
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+.alert-danger {
+  background: rgba(220, 38, 38, 0.2);
+  color: #fca5a5;
+  border-left: 4px solid #dc2626;
 }
 
-@keyframes slideIn {
-    from { transform: translateY(25px); }
-    to { transform: translateY(0); }
+/* Features */
+.features {
+  margin-top: 40px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* Responsive design */
-@media (max-width: 480px) {
-    .login-card {
-        padding: 35px 25px;
-    }
-    
-    .login-title {
-        font-size: 2rem;
-    }
-    
-    .login-logo {
-        font-size: 3.5rem;
-    }
+.feature {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  color: var(--spotify-text-muted);
+  font-size: 0.9rem;
+}
+
+.feature i {
+  color: var(--spotify-green);
+  margin-right: 12px;
+  width: 20px;
+  text-align: center;
+}
+
+/* Spinner */
+.spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+
+/* Mobile */
+@media (max-width: 575px) {
+  .login-card {
+    padding: 32px 24px;
+    margin: 16px;
+  }
+
+  .login-title {
+    font-size: 2rem;
+  }
+
+  .login-logo i {
+    font-size: 3rem;
+  }
+}
+
+/* Accessibility */
+*:focus {
+  outline: 2px solid var(--spotify-green);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }
