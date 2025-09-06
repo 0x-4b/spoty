@@ -1,8 +1,9 @@
-yt-dlp
-spotipy
 Flask
 Flask-Session
+spotipy
+yt-dlp
 requests
 python-dotenv
 mutagen
 werkzeug
+gunicorn
