@@ -1,65 +1,76 @@
-/* Login Page - Clean Spotify Style */
+/* Refined Spotify-Inspired Login UI */
 
 :root {
   --spotify-green: #1db954;
   --spotify-green-hover: #1ed760;
+  --spotify-green-dark: #169c46;
   --spotify-black: #191414;
   --spotify-dark-grey: #121212;
   --spotify-grey: #1a1a1a;
   --spotify-light-grey: #282828;
+  --spotify-white: #ffffff;
   --spotify-text: #ffffff;
   --spotify-text-muted: #b3b3b3;
   --border-radius: 12px;
+  --border-radius-lg: 16px;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  --transition: all 0.3s ease;
+  --shadow-hover: 0 16px 48px rgba(0, 0, 0, 0.4);
+  --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --gradient-primary: linear-gradient(135deg, var(--spotify-green) 0%, #1ed760 100%);
+  --gradient-dark: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+  --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-  background: linear-gradient(135deg, var(--spotify-dark-grey) 0%, var(--spotify-black) 100%);
+  font-family: 'Circular', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  background: var(--gradient-dark);
+  background-attachment: fixed;
   color: var(--spotify-text);
-  margin: 0;
-  padding: 0;
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
 }
 
-/* Background gradient overlay */
+/* Animated background elements */
 body::before {
   content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: radial-gradient(ellipse at center, rgba(29, 185, 84, 0.1) 0%, transparent 70%);
-  z-index: -1;
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(29, 185, 84, 0.1) 0%, transparent 50%),
+              radial-gradient(circle at 80% 20%, rgba(29, 185, 84, 0.05) 0%, transparent 50%),
+              radial-gradient(circle at 20% 80%, rgba(29, 185, 84, 0.08) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+  33% { transform: translate(-48%, -52%) rotate(120deg); }
+  66% { transform: translate(-52%, -48%) rotate(240deg); }
 }
 
 .login-container {
   width: 100%;
-  max-width: 450px;
-  padding: 20px;
+  max-width: 400px;
+  position: relative;
+  z-index: 2;
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.login-card {
-  background: rgba(40, 40, 40, 0.8);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--border-radius);
-  padding: 48px 40px;
-  text-align: center;
-  box-shadow: var(--shadow);
-  animation: slideUp 0.6s ease-out;
-}
-
-@keyframes slideUp {
+@keyframes fadeInUp {
   from {
     opacity: 0;
     transform: translateY(30px);
@@ -70,30 +81,88 @@ body::before {
   }
 }
 
+.login-card {
+  background: var(--gradient-card);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--border-radius-lg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: var(--shadow-hover);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--gradient-primary);
+  border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+}
+
+.login-card:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.login-logo {
+  margin-bottom: 32px;
+  position: relative;
+}
+
 .login-logo i {
   font-size: 4rem;
   color: var(--spotify-green);
-  margin-bottom: 24px;
-  display: block;
+  filter: drop-shadow(0 0 20px rgba(29, 185, 84, 0.4));
+  transition: var(--transition);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    transform: scale(1);
+    filter: drop-shadow(0 0 20px rgba(29, 185, 84, 0.4));
+  }
+  50% { 
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 30px rgba(29, 185, 84, 0.6));
+  }
+}
+
+.login-logo:hover i {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 30px rgba(29, 185, 84, 0.8));
 }
 
 .login-title {
-  font-size: 2.5rem;
   font-weight: 900;
+  font-size: 2.5rem;
   margin-bottom: 8px;
-  color: var(--spotify-text);
+  background: linear-gradient(135deg, var(--spotify-text) 0%, var(--spotify-green) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 .login-subtitle {
   color: var(--spotify-text-muted);
+  margin-bottom: 40px;
   font-size: 1.1rem;
-  margin-bottom: 32px;
   font-weight: 400;
+  line-height: 1.5;
 }
 
-/* Form */
 .form-group {
   margin-bottom: 24px;
+  text-align: left;
 }
 
 .form-control {
@@ -104,126 +173,218 @@ body::before {
   color: var(--spotify-text);
   font-size: 1rem;
   padding: 16px 20px;
+  font-weight: 500;
+  transition: var(--transition);
+  backdrop-filter: blur(10px);
+}
+
+.form-control::placeholder {
+  color: var(--spotify-text-muted);
   transition: var(--transition);
 }
 
 .form-control:focus {
   background: rgba(255, 255, 255, 0.15);
   border-color: var(--spotify-green);
+  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
   color: var(--spotify-text);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.2);
+  transform: translateY(-2px);
 }
 
-.form-control::placeholder {
-  color: var(--spotify-text-muted);
+.form-control:focus::placeholder {
+  color: rgba(255, 255, 255, 0.8);
+  transform: translateY(-2px);
 }
 
-/* Buttons */
 .btn {
   width: 100%;
-  border: none;
   border-radius: var(--border-radius);
-  font-weight: 600;
+  font-weight: 700;
   font-size: 1rem;
   padding: 16px 24px;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  border: none;
   transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+  text-transform: none;
+  letter-spacing: 0.5px;
   cursor: pointer;
 }
 
-.btn-spotify {
-  background: var(--spotify-green);
-  color: white;
-  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.3);
+.btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: var(--transition);
 }
 
-.btn-spotify:hover {
-  background: var(--spotify-green-hover);
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
+.btn:hover::before {
+  left: 100%;
 }
 
-.btn-spotify:disabled {
-  opacity: 0.7;
+.btn-primary {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.4);
+}
+
+.btn-primary:hover {
+  background: var(--gradient-primary);
+  color: white;
+  box-shadow: 0 8px 32px rgba(29, 185, 84, 0.6);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.btn-primary:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.4);
+}
+
+.btn:disabled {
+  opacity: 0.6;
   cursor: not-allowed;
-  transform: none;
+  transform: none !important;
 }
 
-/* Alert */
+.btn:disabled:hover {
+  transform: none !important;
+  box-shadow: 0 4px 16px rgba(29, 185, 84, 0.4) !important;
+}
+
 .alert {
-  margin-bottom: 24px;
-  padding: 16px;
-  border-radius: var(--border-radius);
   border: none;
+  border-radius: var(--border-radius);
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
+  animation: slideInDown 0.4s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .alert-danger {
-  background: rgba(220, 38, 38, 0.2);
+  background: rgba(239, 68, 68, 0.2);
   color: #fca5a5;
-  border-left: 4px solid #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.1);
 }
 
-/* Features */
-.features {
-  margin-top: 40px;
-  padding-top: 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+.alert i {
+  font-size: 1.1rem;
+  margin-right: 8px;
+  flex-shrink: 0;
 }
 
-.feature {
-  display: flex;
-  align-items: center;
-  margin-bottom: 12px;
-  color: var(--spotify-text-muted);
-  font-size: 0.9rem;
-}
-
-.feature i {
-  color: var(--spotify-green);
-  margin-right: 12px;
-  width: 20px;
-  text-align: center;
-}
-
-/* Spinner */
-.spinner-border-sm {
+/* Loading spinner override */
+.spinner-border {
+  color: white;
   width: 1rem;
   height: 1rem;
-  border-width: 2px;
 }
 
-/* Mobile */
-@media (max-width: 575px) {
-  .login-card {
-    padding: 32px 24px;
-    margin: 16px;
-  }
-
-  .login-title {
-    font-size: 2rem;
-  }
-
-  .login-logo i {
-    font-size: 3rem;
-  }
+.spinner-border-sm {
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
-/* Accessibility */
-*:focus {
+/* Focus states for accessibility */
+*:focus-visible {
   outline: 2px solid var(--spotify-green);
   outline-offset: 2px;
 }
 
+/* Responsive Design for Login */
+@media (max-width: 576px) {
+  body {
+    padding: 16px;
+  }
+  
+  .login-card {
+    padding: 32px 24px;
+  }
+  
+  .login-title {
+    font-size: 2rem;
+  }
+  
+  .login-subtitle {
+    font-size: 1rem;
+    margin-bottom: 32px;
+  }
+  
+  .login-logo i {
+    font-size: 3rem;
+  }
+  
+  .form-control, .btn {
+    padding: 14px 18px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .login-card {
+    padding: 24px 20px;
+  }
+  
+  .login-title {
+    font-size: 1.75rem;
+  }
+  
+  .login-logo i {
+    font-size: 2.5rem;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .login-card {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  .form-control {
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+}
+
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  
+  .login-logo i {
+    animation: none;
+  }
+  
+  body::before {
+    animation: none;
+  }
+}
+
+.btn:active {
+  transform: scale(0.98);
 }

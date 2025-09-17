@@ -3,40 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Spotify Downloader</title>
+    <title>Login - MusicHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/css/login.css">
 </head>
 <body>
     <div class="login-container">
-        <div class="login-card">
+        <div class="login-card glass">
             <div class="login-logo">
-                <i class="bi bi-spotify"></i>
+                <i class="bi bi-music-note-beamed"></i>
             </div>
-            <h1 class="login-title">Spotify Downloader</h1>
-            <p class="login-subtitle">Download your favorite Spotify content</p>
+            <h1 class="login-title">MusicHub</h1>
+            <p class="login-subtitle">Download your favorite music content</p>
             
             {% if error %}
-            <div class="alert alert-danger">
+            <div class="alert alert-danger glass">
                 <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
             </div>
             {% endif %}
             
             {% if spotify_auth_url %}
-                <a href="{{ spotify_auth_url }}" class="btn btn-spotify" id="spotifyBtn">
-                    <i class="bi bi-spotify me-2"></i>Connect Spotify Account
+                <a href="{{ spotify_auth_url }}" class="btn btn-primary" id="spotifyBtn">
+                    <i class="bi bi-music-note-beamed me-2"></i>Connect Account
                 </a>
             {% else %}
                 <form method="POST" id="loginForm">
                     <div class="form-group">
                         <input type="password" 
-                               class="form-control" 
+                               class="form-control glass" 
                                name="password" 
                                placeholder="Enter password" 
                                required>
                     </div>
-                    <button type="submit" class="btn btn-spotify" id="loginBtn">
+                    <button type="submit" class="btn btn-primary" id="loginBtn">
                         <i class="bi bi-box-arrow-in-right me-2"></i>Login
                     </button>
                 </form>

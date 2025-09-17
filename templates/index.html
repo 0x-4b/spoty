@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Spotify Content Downloader</title>
+    <title>MusicHub Downloader</title>
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
       rel="stylesheet"
@@ -12,19 +12,385 @@
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css"
     />
-    <link rel="stylesheet" href="/static/css/index.css" />
+    <style>
+      :root {
+        --primary-color: #1db954;
+        --secondary-color: #191414;
+        --accent-color: #1ed760;
+        --text-color: #ffffff;
+        --bg-color: #121212;
+        --card-bg: rgba(30, 30, 30, 0.8);
+        --glass-bg: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.2);
+      }
+
+      body {
+        background: linear-gradient(135deg, var(--secondary-color), #000000);
+        color: var(--text-color);
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+      }
+
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+      }
+
+      .glass-dark {
+        background: rgba(18, 18, 18, 0.9);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .sidebar {
+        width: 280px;
+        height: 100vh;
+        position: fixed;
+        left: 0;
+        top: 0;
+        padding: 20px 0;
+        z-index: 1000;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .sidebar-brand {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--primary-color);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        padding: 0 20px 20px;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 20px;
+      }
+
+      .sidebar-brand i {
+        margin-right: 10px;
+        font-size: 1.8rem;
+      }
+
+      .sidebar-nav {
+        padding: 0 10px;
+      }
+
+      .nav-item {
+        margin-bottom: 5px;
+      }
+
+      .nav-link {
+        color: var(--text-color);
+        padding: 12px 15px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s;
+        text-decoration: none;
+      }
+
+      .nav-link:hover,
+      .nav-link.active {
+        background: var(--glass-bg);
+        color: var(--accent-color);
+      }
+
+      .nav-link i {
+        margin-right: 10px;
+        font-size: 1.2rem;
+      }
+
+      .sidebar-footer {
+        padding: 20px;
+        margin-top: auto;
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+      }
+
+      .user-info {
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+      }
+
+      .user-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin-right: 15px;
+      }
+
+      .logout-btn {
+        color: var(--text-color);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .logout-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--accent-color);
+      }
+
+      .logout-btn i {
+        margin-right: 8px;
+      }
+
+      .main-content {
+        margin-left: 280px;
+        padding: 30px;
+        min-height: 100vh;
+      }
+
+      .content-section {
+        display: block;
+      }
+
+      .content-header {
+        margin-bottom: 30px;
+      }
+
+      .content-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--primary-color);
+      }
+
+      .content-subtitle {
+        color: #b3b3b3;
+        font-size: 1.1rem;
+      }
+
+      .card {
+        border: none;
+        border-radius: 16px;
+        margin-bottom: 24px;
+        color: var(--text-color);
+      }
+
+      .card-header {
+        background: transparent;
+        border-bottom: 1px solid var(--glass-border);
+        padding: 20px;
+        font-weight: 600;
+      }
+
+      .card-body {
+        padding: 20px;
+      }
+
+      .form-control,
+      .form-select {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        color: var(--text-color);
+        border-radius: 8px;
+      }
+
+      .form-control:focus,
+      .form-select:focus {
+        background: var(--glass-bg);
+        border-color: var(--primary-color);
+        color: var(--text-color);
+        box-shadow: 0 0 0 0.25rem rgba(29, 185, 84, 0.25);
+      }
+
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+      }
+
+      .btn-primary:hover {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+      }
+
+      .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+        border-radius: 8px;
+      }
+
+      .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: var(--text-color);
+      }
+
+      .progress {
+        height: 8px;
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        background-color: var(--primary-color);
+      }
+
+      .track-item {
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 12px;
+        transition: all 0.3s;
+      }
+
+      .track-item:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+      }
+
+      .library-img {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        margin-right: 15px;
+        object-fit: cover;
+      }
+
+      .library-item,
+      .download-item,
+      .search-result {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .library-item:hover,
+      .download-item:hover,
+      .search-result:hover {
+        background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-2px);
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #b3b3b3;
+      }
+
+      .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 15px;
+        display: block;
+      }
+
+      .menu-toggle {
+        display: none;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1100;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+      }
+
+      .session-progress {
+        margin-bottom: 30px;
+      }
+
+      .download-progress-item {
+        margin-bottom: 15px;
+      }
+
+      .download-progress-item.error .progress-bar {
+        background-color: #dc3545;
+      }
+
+      .download-progress-item.complete .progress-bar {
+        background-color: var(--primary-color);
+      }
+
+      .fade-in {
+        animation: fadeIn 0.5s ease-in;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .toast {
+        background: var(--card-bg);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--glass-border);
+      }
+
+      @media (max-width: 992px) {
+        .sidebar {
+          transform: translateX(-100%);
+        }
+
+        .main-content {
+          margin-left: 0;
+          padding: 20px;
+        }
+
+        .menu-toggle {
+          display: flex;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .content-title {
+          font-size: 1.8rem;
+        }
+
+        .main-content {
+          padding: 15px;
+        }
+      }
+    </style>
   </head>
   <body>
     <!-- Menu toggle for mobile -->
-    <button class="menu-toggle" id="menuToggle">
+    <button class="menu-toggle glass" id="menuToggle">
       <i class="bi bi-list"></i>
     </button>
 
     <!-- Sidebar -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar glass-dark" id="sidebar">
       <div class="sidebar-header">
         <a href="#" class="sidebar-brand">
-          <i class="bi bi-spotify"></i>Spotify Downloader
+          <i class="bi bi-music-note-beamed"></i>MusicHub
         </a>
       </div>
 
@@ -57,7 +423,7 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="user-info">
+        <div class="user-info glass">
           <div class="user-avatar">
             {{ session.spotify_user[0]|upper if session.spotify_user else 'U' }}
           </div>
@@ -87,40 +453,43 @@
         <div class="content-header">
           <h1 class="content-title">Download Content</h1>
           <p class="content-subtitle">
-            Download songs, playlists, albums, and podcasts from Spotify
+            Download songs, playlists, albums, and podcasts
           </p>
         </div>
 
         <div class="row">
           <div class="col-lg-8">
-            <div class="card mb-4">
+            <div class="card glass mb-4">
               <div class="card-header">
                 <h5 class="card-title">
-                  <i class="bi bi-link-45deg"></i> Enter Spotify URL
+                  <i class="bi bi-link-45deg"></i> Enter URL
                 </h5>
               </div>
               <div class="card-body">
                 <p class="text-muted">
-                  Paste a Spotify playlist, album, track, episode, or show URL
+                  Paste a playlist, album, track, episode, or show URL
                 </p>
 
                 <div class="input-group mb-3">
                   <input
                     type="text"
-                    class="form-control"
+                    class="form-control glass"
                     id="spotifyUrl"
                     placeholder="https://open.spotify.com/playlist/..."
                   />
-                  <button class="btn btn-spotify" type="button" id="analyzeBtn">
+                  <button class="btn btn-primary" type="button" id="analyzeBtn">
                     <i class="bi bi-search me-1"></i> Analyze
                   </button>
                 </div>
 
-                <div id="urlError" class="alert alert-danger d-none"></div>
+                <div
+                  id="urlError"
+                  class="alert alert-danger d-none glass"
+                ></div>
               </div>
             </div>
 
-            <div class="card mb-4 d-none" id="contentInfoCard">
+            <div class="card glass mb-4 d-none" id="contentInfoCard">
               <div class="card-header">
                 <h5 class="card-title">
                   <i class="bi bi-collection-play"></i> Content Information
@@ -131,7 +500,7 @@
                   <img
                     src=""
                     id="contentImage"
-                    class="rounded me-3"
+                    class="rounded me-3 content-image"
                     width="80"
                     height="80"
                   />
@@ -143,7 +512,7 @@
 
                 <div class="d-flex align-items-center mb-3">
                   <span class="me-2">Quality:</span>
-                  <select class="quality-selector" id="qualitySelector">
+                  <select class="quality-selector glass" id="qualitySelector">
                     <option value="128">128kbps</option>
                     <option value="192" selected>192kbps</option>
                     <option value="256">256kbps</option>
@@ -159,14 +528,14 @@
                     <div class="btn-group" role="group">
                       <button
                         type="button"
-                        class="btn btn-outline-spotify btn-sm"
+                        class="btn btn-outline-primary btn-sm"
                         id="selectAllBtn"
                       >
                         <i class="bi bi-check-all me-1"></i> Select All
                       </button>
                       <button
                         type="button"
-                        class="btn btn-outline-spotify btn-sm"
+                        class="btn btn-outline-primary btn-sm"
                         id="deselectAllBtn"
                       >
                         <i class="bi bi-x-circle me-1"></i> Deselect All
@@ -175,13 +544,13 @@
                   </div>
                 </div>
 
-                <button class="btn btn-spotify w-100" id="downloadBtn">
+                <button class="btn btn-primary w-100" id="downloadBtn">
                   <i class="bi bi-download me-1"></i> Download Selected
                 </button>
               </div>
             </div>
 
-            <div class="card d-none" id="tracksCard">
+            <div class="card glass d-none" id="tracksCard">
               <div class="card-header">
                 <h5 class="card-title">
                   <i class="bi bi-music-note-list"></i> Tracks
@@ -194,7 +563,7 @@
           </div>
 
           <div class="col-lg-4">
-            <div class="card">
+            <div class="card glass">
               <div class="card-header">
                 <h5 class="card-title">
                   <i class="bi bi-graph-up"></i> Download Progress
@@ -216,36 +585,30 @@
       <!-- Search Section -->
       <div class="content-section d-none" id="search-section">
         <div class="content-header">
-          <h1 class="content-title">Search Spotify</h1>
-          <p class="content-subtitle">Search for music on Spotify</p>
+          <h1 class="content-title">Search</h1>
+          <p class="content-subtitle">Search for music</p>
         </div>
 
         <div class="row">
           <div class="col-md-12">
-            <div class="card mb-4">
+            <div class="card glass mb-4">
               <div class="card-header">
-                <h5 class="card-title">
-                  <i class="bi bi-spotify"></i> Spotify Search
-                </h5>
+                <h5 class="card-title"><i class="bi bi-search"></i> Search</h5>
               </div>
               <div class="card-body">
                 <div class="input-group mb-3">
                   <input
                     type="text"
-                    class="form-control"
-                    id="spotifySearchQuery"
+                    class="form-control glass"
+                    id="searchQuery"
                     placeholder="Search for songs, artists, albums..."
                   />
-                  <button
-                    class="btn btn-spotify"
-                    type="button"
-                    id="spotifySearchBtn"
-                  >
+                  <button class="btn btn-primary" type="button" id="searchBtn">
                     <i class="bi bi-search"></i> Search
                   </button>
                 </div>
 
-                <div id="spotifySearchResults" class="mt-3 d-none">
+                <div id="searchResults" class="mt-3 d-none">
                   <ul class="nav nav-tabs" id="search-tabs" role="tablist">
                     <li class="nav-item" role="presentation">
                       <button
@@ -329,12 +692,10 @@
       <div class="content-section d-none" id="library-section">
         <div class="content-header">
           <h1 class="content-title">My Library</h1>
-          <p class="content-subtitle">
-            Your Spotify playlists and saved tracks
-          </p>
+          <p class="content-subtitle">Your playlists and saved tracks</p>
         </div>
 
-        <div class="card mb-4">
+        <div class="card glass mb-4">
           <div class="card-header">
             <h5 class="card-title">
               <i class="bi bi-music-note-list"></i> My Playlists
@@ -345,7 +706,7 @@
           </div>
         </div>
 
-        <div class="card">
+        <div class="card glass">
           <div class="card-header">
             <h5 class="card-title"><i class="bi bi-heart"></i> Liked Songs</h5>
           </div>
@@ -362,7 +723,7 @@
           <p class="content-subtitle">Previously downloaded files</p>
         </div>
 
-        <div class="card">
+        <div class="card glass">
           <div class="card-header">
             <h5 class="card-title">
               <i class="bi bi-folder2-open"></i> Downloaded Files
@@ -378,10 +739,10 @@
       <div class="content-section d-none" id="help-section">
         <div class="content-header">
           <h1 class="content-title">Help & Instructions</h1>
-          <p class="content-subtitle">How to use the Spotify Downloader</p>
+          <p class="content-subtitle">How to use the Music Downloader</p>
         </div>
 
-        <div class="card">
+        <div class="card glass">
           <div class="card-header">
             <h5 class="card-title">
               <i class="bi bi-info-circle"></i> Getting Started
@@ -391,8 +752,8 @@
             <h6>How to download content:</h6>
             <ol class="mb-4">
               <li>
-                Copy the Spotify URL of the content you want to download
-                (playlist, album, track, episode, or show)
+                Copy the URL of the content you want to download (playlist,
+                album, track, episode, or show)
               </li>
               <li>Paste the URL in the input field and click "Analyze"</li>
               <li>Select the tracks you want to download</li>
@@ -411,7 +772,7 @@
             <h6>Additional features:</h6>
             <ul>
               <li>Search for content directly within the app</li>
-              <li>Browse your personal Spotify library</li>
+              <li>Browse your personal library</li>
               <li>Choose audio quality (128kbps to 320kbps)</li>
               <li>Automatic metadata and cover art embedding</li>
             </ul>
@@ -428,7 +789,7 @@
       aria-hidden="true"
     >
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content glass">
           <div class="modal-header">
             <h5 class="modal-title">
               <i class="bi bi-download me-2"></i>Confirm Download
@@ -442,7 +803,7 @@
           </div>
           <div class="modal-body">
             <div class="text-center mb-3">
-              <i class="bi bi-music-note-beamed display-1 text-spotify"></i>
+              <i class="bi bi-music-note-beamed display-1 text-primary"></i>
             </div>
             <p class="text-center">
               You're about to download
@@ -452,14 +813,14 @@
               <label for="confirmQuality" class="form-label"
                 >Download Quality:</label
               >
-              <select id="confirmQuality" class="form-select">
+              <select id="confirmQuality" class="form-select glass">
                 <option value="128">128kbps</option>
                 <option value="192" selected>192kbps</option>
                 <option value="256">256kbps</option>
                 <option value="320">320kbps</option>
               </select>
             </div>
-            <div class="alert alert-info">
+            <div class="alert alert-info glass">
               <i class="bi bi-info-circle me-2"></i>
               The download will start immediately. You can monitor progress in
               the right panel.
@@ -475,7 +836,7 @@
             </button>
             <button
               type="button"
-              class="btn btn-spotify"
+              class="btn btn-primary"
               id="confirmDownloadBtn"
             >
               <i class="bi bi-download me-1"></i>Start Download
@@ -493,7 +854,7 @@
       aria-hidden="true"
     >
       <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content glass">
           <div class="modal-header">
             <h5 class="modal-title">
               <i class="bi bi-download me-2"></i>Quick Download
@@ -510,7 +871,7 @@
               <img
                 id="quickDownloadImage"
                 src=""
-                class="rounded mb-3"
+                class="rounded mb-3 content-image"
                 width="120"
                 height="120"
               />
@@ -521,14 +882,14 @@
               <label for="quickDownloadQuality" class="form-label"
                 >Download Quality:</label
               >
-              <select id="quickDownloadQuality" class="form-select">
+              <select id="quickDownloadQuality" class="form-select glass">
                 <option value="128">128kbps</option>
                 <option value="192" selected>192kbps</option>
                 <option value="256">256kbps</option>
                 <option value="320">320kbps</option>
               </select>
             </div>
-            <div class="alert alert-info">
+            <div class="alert alert-info glass">
               <i class="bi bi-info-circle me-2"></i>
               This track will be downloaded immediately.
             </div>
@@ -543,7 +904,7 @@
             </button>
             <button
               type="button"
-              class="btn btn-spotify"
+              class="btn btn-primary"
               id="confirmQuickDownloadBtn"
             >
               <i class="bi bi-download me-1"></i>Download Now
@@ -570,7 +931,7 @@
       };
 
       // DOM elements (will be initialized after DOM is loaded)
-      let menuToggle, sidebar, navLinks, contentSections;
+      let menuToggle, sidebar, navLinks, contentSections, tabPanes;
 
       // Initialize the application
       function initApp() {
@@ -584,6 +945,17 @@
         setupEventListeners();
         loadDownloads();
         loadLibrary();
+
+        // Check if user is authenticated with Spotify
+        checkSpotifyAuth();
+      }
+
+      // Check Spotify authentication status
+      function checkSpotifyAuth() {
+        const userStatus = document.querySelector(".user-status");
+        if (userStatus && userStatus.textContent.includes("Not Connected")) {
+          showToast("Please connect to Spotify to access all features", "info");
+        }
       }
 
       // Set up event listeners
@@ -626,13 +998,13 @@
           );
 
         // Search functionality
-        const searchBtn = document.getElementById("spotifySearchBtn");
-        if (searchBtn) searchBtn.addEventListener("click", searchSpotify);
+        const searchBtn = document.getElementById("searchBtn");
+        if (searchBtn) searchBtn.addEventListener("click", searchContent);
 
-        const searchQuery = document.getElementById("spotifySearchQuery");
+        const searchQuery = document.getElementById("searchQuery");
         if (searchQuery) {
           searchQuery.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") searchSpotify();
+            if (e.key === "Enter") searchContent();
           });
         }
 
@@ -695,7 +1067,7 @@
             });
           }
 
-          const searchResults = document.getElementById("spotifySearchResults");
+          const searchResults = document.getElementById("searchResults");
           if (searchResults) searchResults.classList.add("d-none");
         }
 
@@ -715,7 +1087,7 @@
         const url = urlInput.value.trim();
 
         if (!url) {
-          showError(errorDiv, "Please enter a Spotify URL");
+          showError(errorDiv, "Please enter a URL");
           return;
         }
 
@@ -778,10 +1150,10 @@
         }
       }
 
-      // Search Spotify
-      async function searchSpotify() {
-        const queryInput = document.getElementById("spotifySearchQuery");
-        const resultsDiv = document.getElementById("spotifySearchResults");
+      // Search Content
+      async function searchContent() {
+        const queryInput = document.getElementById("searchQuery");
+        const resultsDiv = document.getElementById("searchResults");
 
         if (!queryInput || !resultsDiv) return;
 
@@ -844,11 +1216,11 @@
 
         if (!items || items.length === 0) {
           container.innerHTML = `
-                <div class="empty-state">
-                    <i class="bi bi-${getIconForType(type)}"></i>
-                    <p>No ${type} found</p>
-                </div>
-            `;
+                    <div class="empty-state">
+                        <i class="bi bi-${getIconForType(type)}"></i>
+                        <p>No ${type} found</p>
+                    </div>
+                `;
           return;
         }
 
@@ -856,45 +1228,47 @@
 
         items.forEach((item) => {
           html += `
-                <div class="search-result">
-                    <div class="d-flex align-items-center">
-                        ${
-                          item.image
-                            ? `<img src="${item.image}" class="library-img" alt="${item.name}">`
-                            : `<div class="library-img bg-secondary d-flex align-items-center justify-content-center">
-                                <i class="bi bi-${getIconForType(type)}"></i>
-                            </div>`
-                        }
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">${item.name}</h6>
-                            <small class="text-muted">${getSubtitleForItem(
-                              item,
-                              type
-                            )}</small>
+                    <div class="search-result glass">
+                        <div class="d-flex align-items-center">
+                            ${
+                              item.image
+                                ? `<img src="${item.image}" class="library-img" alt="${item.name}">`
+                                : `<div class="library-img bg-secondary d-flex align-items-center justify-content-center">
+                                        <i class="bi bi-${getIconForType(
+                                          type
+                                        )}"></i>
+                                    </div>`
+                            }
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">${item.name}</h6>
+                                <small class="text-muted">${getSubtitleForItem(
+                                  item,
+                                  type
+                                )}</small>
+                            </div>
+                            ${
+                              type === "artist"
+                                ? `<button class="btn btn-outline-primary btn-sm view-artist-tracks" 
+                                        data-artist-id="${item.id}" data-artist-name="${item.name}">
+                                        <i class="bi bi-music-note-list"></i> View Tracks
+                                    </button>`
+                                : `<button class="btn btn-outline-primary btn-sm quick-download-btn" 
+                                        data-track-id="${item.id || ""}" 
+                                        data-track-name="${item.name}" 
+                                        data-track-artist="${
+                                          type === "track"
+                                            ? item.artists.join(", ")
+                                            : item.artists
+                                            ? item.artists.join(", ")
+                                            : ""
+                                        }"
+                                        data-track-image="${item.image || ""}">
+                                        <i class="bi bi-download"></i>
+                                    </button>`
+                            }
                         </div>
-                        ${
-                          type === "artist"
-                            ? `<button class="btn btn-outline-spotify btn-sm view-artist-tracks" 
-                                data-artist-id="${item.id}" data-artist-name="${item.name}">
-                                <i class="bi bi-music-note-list"></i> View Tracks
-                            </button>`
-                            : `<button class="btn btn-outline-spotify btn-sm quick-download-btn" 
-                                data-track-id="${item.id || ""}" 
-                                data-track-name="${item.name}" 
-                                data-track-artist="${
-                                  type === "track"
-                                    ? item.artists.join(", ")
-                                    : item.artists
-                                    ? item.artists.join(", ")
-                                    : ""
-                                }"
-                                data-track-image="${item.image || ""}">
-                                <i class="bi bi-download"></i>
-                            </button>`
-                        }
                     </div>
-                </div>
-            `;
+                `;
         });
 
         container.innerHTML = html;
@@ -933,7 +1307,7 @@
       function addSearchResultEventListeners() {
         // Add event listeners to download buttons
         const downloadButtons = document.querySelectorAll(
-          "#spotifySearchResults .quick-download-btn"
+          "#searchResults .quick-download-btn"
         );
         if (downloadButtons && downloadButtons.length > 0) {
           downloadButtons.forEach((button) => {
@@ -1065,7 +1439,7 @@
         }
       }
 
-      // Render tracks list
+      // Fix for the renderTracks function
       function renderTracks(tracks) {
         const tracksList = document.getElementById("tracksList");
         if (!tracksList) return;
@@ -1074,28 +1448,38 @@
 
         tracks.forEach((track, index) => {
           const trackEl = document.createElement("div");
-          trackEl.className = "track-item fade-in";
-          track.track_number = index + 1;
+          trackEl.className = "track-item glass fade-in";
+
+          // Ensure track has a track_number
+          if (!track.track_number) {
+            track.track_number = index + 1;
+          }
+
+          // Use the track's name if available, otherwise create one
+          const trackName =
+            track.name || `${track.title} - ${track.artists.join(", ")}`;
+
           trackEl.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <div class="flex-grow-1">
-                        <h6 class="mb-0">${track.name}</h6>
-                        <small class="text-muted">${track.artists.join(
-                          ", "
-                        )}</small>
-                    </div>
-                    <div class="form-check form-switch ms-3">
-                        <input class="form-check-input track-checkbox" type="checkbox" 
-                               data-track-num="${
-                                 track.track_number
-                               }" checked role="switch">
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                    <h6 class="mb-0">${trackName}</h6>
+                    <small class="text-muted">${
+                      Array.isArray(track.artists)
+                        ? track.artists.join(", ")
+                        : track.artists
+                    }</small>
                 </div>
-            `;
+                <div class="form-check form-switch ms-3">
+                    <input class="form-check-input track-checkbox" type="checkbox" 
+                           data-track-num="${
+                             track.track_number
+                           }" checked role="switch">
+                </div>
+            </div>
+        `;
           tracksList.appendChild(trackEl);
         });
       }
-
       // Toggle all track selections
       function toggleAllSelection(select) {
         const checkboxes = document.querySelectorAll(".track-checkbox");
@@ -1217,6 +1601,7 @@
           showToast("Error starting download: " + error, "error");
         }
       }
+
       // Start polling for download progress
       function startProgressPolling() {
         // Clear any existing interval
@@ -1243,6 +1628,7 @@
           }
         }, 2000);
       }
+
       // Render download progress
       function renderProgress(data) {
         const progressArea = document.getElementById("progressArea");
@@ -1270,21 +1656,21 @@
 
           // Session header and overall progress
           html += `
-            <div class="session-progress mb-4 p-3 border rounded ${
-              hasErrors ? "border-warning" : ""
-            }">
-                <h6 class="mb-3">Download Session</h6>
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="small">Overall Progress</span>
-                        <span class="small">${completed}/${total}</span>
-                    </div>
-                    <div class="progress" style="height: 10px;">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: ${(completed / total) * 100}%"></div>
-                    </div>
-                </div>
-        `;
+                    <div class="session-progress glass mb-4 p-3">
+                        <h6 class="mb-3">Download Session</h6>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small">Overall Progress</span>
+                                <span class="small">${completed}/${total}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: ${
+                                       (completed / total) * 100
+                                     }%"></div>
+                            </div>
+                        </div>
+                `;
 
           // Individual tracks
           for (const [trackNum, progress] of Object.entries(tracks)) {
@@ -1314,46 +1700,46 @@
             }
 
             html += `
-                <div class="download-progress-item ${statusClass} mb-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="small text-truncate" style="max-width: 60%">${trackName}</span>
-                        <span class="small">${progress.message}</span>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar" role="progressbar" 
-                             style="width: ${progressWidth}%"></div>
-                    </div>
-                    ${
-                      progress.details
-                        ? `<small class="text-muted">${progress.details}</small>`
-                        : ""
-                    }
-                    ${
-                      progress.status === "error"
-                        ? `
-                        <div class="mt-1">
-                            <button class="btn btn-outline-warning btn-sm retry-download" 
-                                data-track-num="${trackNum}" data-dl-id="${dlId}">
-                                <i class="bi bi-arrow-clockwise"></i> Retry
-                            </button>
+                        <div class="download-progress-item ${statusClass} mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="small text-truncate" style="max-width: 60%">${trackName}</span>
+                                <span class="small">${progress.message}</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" role="progressbar" 
+                                     style="width: ${progressWidth}%"></div>
+                            </div>
+                            ${
+                              progress.details
+                                ? `<small class="text-muted">${progress.details}</small>`
+                                : ""
+                            }
+                            ${
+                              progress.status === "error"
+                                ? `
+                                    <div class="mt-1">
+                                        <button class="btn btn-outline-warning btn-sm retry-download" 
+                                            data-track-num="${trackNum}" data-dl-id="${dlId}">
+                                            <i class="bi bi-arrow-clockwise"></i> Retry
+                                        </button>
+                                    </div>
+                                `
+                                : ""
+                            }
                         </div>
-                    `
-                        : ""
-                    }
-                </div>
-            `;
+                    `;
           }
 
           // Add download button if session is complete or has successful downloads
           const result = data.results[dlId];
           if (result && (completed === total || completed > 0)) {
             html += `
-                <div class="mt-3">
-                    <a href="/download_zip/${dlId}" class="btn btn-success btn-sm">
-                        <i class="bi bi-file-earmark-zip"></i> Download Successful Files
-                    </a>
-                </div>
-            `;
+                        <div class="mt-3">
+                            <a href="/download_zip/${dlId}" class="btn btn-success btn-sm">
+                                <i class="bi bi-file-earmark-zip"></i> Download Successful Files
+                            </a>
+                        </div>
+                    `;
           }
 
           html += `</div>`; // Close session-progress div
@@ -1417,32 +1803,39 @@
 
         for (const [dlId, result] of Object.entries(results)) {
           html += `
-            <div class="mb-2">
-                <div class="text-success">✓ Success: ${result.success}</div>
-                <div class="text-danger">✗ Failed: ${result.failed}</div>
-                <div class="text-muted">🔍 Not found: ${result.not_found}</div>
-                ${
-                  result.cancelled > 0
-                    ? `<div class="text-warning">⏹ Cancelled: ${result.cancelled}</div>`
-                    : ""
-                }
-            </div>
-        `;
+                    <div class="mb-2">
+                        <div class="text-success">✓ Success: ${
+                          result.success
+                        }</div>
+                        <div class="text-danger">✗ Failed: ${
+                          result.failed
+                        }</div>
+                        <div class="text-muted">🔍 Not found: ${
+                          result.not_found
+                        }</div>
+                        ${
+                          result.cancelled > 0
+                            ? `<div class="text-warning">⏹ Cancelled: ${result.cancelled}</div>`
+                            : ""
+                        }
+                    </div>
+                `;
 
           // If there's a zip file, show download button
           if (result.zip_filename) {
             html += `
-                <div class="mt-2">
-                    <a href="/download_zip/${result.zip_filename}" class="btn btn-success btn-sm">
-                        <i class="bi bi-file-earmark-zip"></i> Download All as ZIP
-                    </a>
-                </div>
-            `;
+                        <div class="mt-2">
+                            <a href="/download_zip/${result.zip_filename}" class="btn btn-success btn-sm">
+                                <i class="bi bi-file-earmark-zip"></i> Download All as ZIP
+                            </a>
+                        </div>
+                    `;
           }
         }
 
         resultsArea.innerHTML = html;
       }
+
       // Load downloads list
       async function loadDownloads() {
         try {
@@ -1461,18 +1854,18 @@
           let html = "";
           files.forEach((file) => {
             html += `
-                    <div class="download-item mb-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0">${file.name}</h6>
-                                <small class="text-muted">${file.size_formatted} • ${file.date}</small>
+                            <div class="download-item glass mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${file.name}</h6>
+                                        <small class="text-muted">${file.size_formatted} • ${file.date}</small>
+                                    </div>
+                                    <a href="/downloads/${file.session_id}/${file.name}" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                </div>
                             </div>
-                            <a href="/downloads/${file.session_id}/${file.name}" class="btn btn-outline-spotify btn-sm">
-                                <i class="bi bi-download"></i>
-                            </a>
-                        </div>
-                    </div>
-                `;
+                        `;
           });
 
           downloadsList.innerHTML = html;
@@ -1492,7 +1885,7 @@
           if (!playlistsList) return;
 
           if (playlists.error) {
-            playlistsList.innerHTML = `<div class="alert alert-danger">${playlists.error}</div>`;
+            playlistsList.innerHTML = `<div class="alert alert-danger glass">${playlists.error}</div>`;
             return;
           }
 
@@ -1505,27 +1898,27 @@
           let html = "";
           playlists.forEach((playlist) => {
             html += `
-                    <div class="library-item mb-3" data-url="https://open.spotify.com/playlist/${
-                      playlist.id
-                    }">
-                        <div class="d-flex align-items-center">
-                            ${
-                              playlist.image
-                                ? `<img src="${playlist.image}" class="library-img" alt="${playlist.name}">`
-                                : `<div class="library-img bg-secondary d-flex align-items-center justify-content-center">
-                                    <i class="bi bi-music-note-list"></i>
-                                </div>`
-                            }
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0">${playlist.name}</h6>
-                                <small class="text-muted">By ${
-                                  playlist.owner
-                                } • ${playlist.tracks} tracks</small>
+                            <div class="library-item glass mb-3" data-url="https://open.spotify.com/playlist/${
+                              playlist.id
+                            }">
+                                <div class="d-flex align-items-center">
+                                    ${
+                                      playlist.image
+                                        ? `<img src="${playlist.image}" class="library-img" alt="${playlist.name}">`
+                                        : `<div class="library-img bg-secondary d-flex align-items-center justify-content-center">
+                                                <i class="bi bi-music-note-list"></i>
+                                            </div>`
+                                    }
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">${playlist.name}</h6>
+                                        <small class="text-muted">By ${
+                                          playlist.owner
+                                        } • ${playlist.tracks} tracks</small>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </div>
                             </div>
-                            <i class="bi bi-chevron-right"></i>
-                        </div>
-                    </div>
-                `;
+                        `;
           });
 
           playlistsList.innerHTML = html;
@@ -1558,7 +1951,7 @@
           if (!savedTracksList) return;
 
           if (tracks.error) {
-            savedTracksList.innerHTML = `<div class="alert alert-danger">${tracks.error}</div>`;
+            savedTracksList.innerHTML = `<div class="alert alert-danger glass">${tracks.error}</div>`;
             return;
           }
 
@@ -1569,19 +1962,19 @@
           }
 
           let html = `
-                <div class="library-item mb-3" data-url="spotify:user:liked">
-                    <div class="d-flex align-items-center">
-                        <div class="library-img bg-danger d-flex align-items-center justify-content-center">
-                            <i class="bi bi-heart-fill text-white"></i>
+                    <div class="library-item glass mb-3" data-url="spotify:user:liked">
+                        <div class="d-flex align-items-center">
+                            <div class="library-img bg-danger d-flex align-items-center justify-content-center">
+                                <i class="bi bi-heart-fill text-white"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">Liked Songs</h6>
+                                <small class="text-muted">${tracks.length} tracks</small>
+                            </div>
+                            <i class="bi bi-chevron-right"></i>
                         </div>
-                        <div class="flex-grow-1">
-                            <h6 class="mb-0">Liked Songs</h6>
-                            <small class="text-muted">${tracks.length} tracks</small>
-                        </div>
-                        <i class="bi bi-chevron-right"></i>
                     </div>
-                </div>
-            `;
+                `;
 
           savedTracksList.innerHTML = html;
 
@@ -1656,20 +2049,20 @@
         const toast = document.createElement("div");
         toast.className = `toast align-items-center text-white bg-${
           type === "error" ? "danger" : type
-        } border-0`;
+        } border-0 glass`;
         toast.setAttribute("role", "alert");
         toast.setAttribute("aria-live", "assertive");
         toast.setAttribute("aria-atomic", "true");
         toast.id = toastId;
 
         toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    ${message}
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
+            `;
 
         toastContainer.appendChild(toast);
 
