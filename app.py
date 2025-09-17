@@ -23,6 +23,8 @@ import base64
 import shutil
 import logging
 from datetime import datetime
+import subprocess
+import sys
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -33,12 +35,26 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-app.secret_key = os.environ.get('FLASK_SECRET_KEY', os.urandom(24))
+app.secret_key = os.environ.get('FLASK_SECRET_KEY')
+if not app.secret_key:
+    logger.warning("FLASK_SECRET_KEY not set, using temporary key (not suitable for production)")
+    app.secret_key = os.urandom(24)
+
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_FILE_DIR'] = './.flask_session/'
 app.config['DOWNLOAD_FOLDER'] = 'downloads'
 app.config['TEMP_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
+
+# Check for required environment variables
+required_env_vars = ['SPOTIFY_CLIENT_ID', 'SPOTIFY_CLIENT_SECRET']
+missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+if missing_vars:
+    logger.error(f"Missing required environment variables: {', '.join(missing_vars)}")
+
+# Password protection
+APP_PASSWORD = os.environ.get('APP_PASSWORD', 'default_password')
+APP_PASSWORD_HASH = generate_password_hash(APP_PASSWORD)
 
 Session(app)
 
@@ -50,9 +66,6 @@ os.makedirs('./.spotify_cache/', exist_ok=True)
 # Configuration
 SPOTIFY_SCOPE = "user-library-read playlist-read-private user-read-private user-read-email user-library-read"
 CACHE_FOLDER = './.spotify_cache/'
-
-# Password protection (change this to your desired password)
-APP_PASSWORD_HASH = generate_password_hash(os.environ.get('APP_PASSWORD'))
 
 def password_required(f):
     @wraps(f)
@@ -92,6 +105,10 @@ def logout():
 def index():
     return render_template('index.html')
 
+@app.route('/health')
+def health_check():
+    return jsonify({'status': 'healthy', 'timestamp': datetime.now().isoformat()})
+
 class SpotifyDownloader:
     def __init__(self):
         self.sp = None
@@ -102,12 +119,20 @@ class SpotifyDownloader:
     def initialize_spotify(self):
         """Initialize Spotify client with OAuth"""
         try:
+            # Check if Spotify credentials are available
+            if not os.environ.get('SPOTIFY_CLIENT_ID') or not os.environ.get('SPOTIFY_CLIENT_SECRET'):
+                self.error = "Spotify credentials not configured"
+                logger.error(self.error)
+                return {'status': 'error', 'message': self.error}
+            
+            cache_path = os.path.join(CACHE_FOLDER, '.spotify_cache')
+            
             auth_manager = SpotifyOAuth(
                 client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
                 client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET'),
                 redirect_uri=os.environ.get('SPOTIFY_REDIRECT_URI', 'http://localhost:5005/callback'),
                 scope=SPOTIFY_SCOPE,
-                cache_path=os.path.join(CACHE_FOLDER, '.spotify_cache'),
+                cache_path=cache_path,
                 show_dialog=True
             )
             
@@ -140,8 +165,8 @@ class SpotifyDownloader:
                 return {'status': 'success'}
             except Exception as e:
                 # Token might be invalid, clear it and require reauthentication
-                if os.path.exists(auth_manager.cache_path):
-                    os.remove(auth_manager.cache_path)
+                if os.path.exists(cache_path):
+                    os.remove(cache_path)
                 self.auth_url = auth_manager.get_authorize_url()
                 return {'status': 'auth_required', 'auth_url': self.auth_url}
                 
@@ -361,11 +386,25 @@ class SpotifyDownloader:
             logger.error(f"Error adding metadata: {e}")
     
     def download_track(self, track_info, output_folder, status_queue, retry_count=0, quality='192'):
-        """Download a single track"""
+        """Download a single track with enhanced error handling"""
+        # Ensure essential keys exist
+        if 'title' not in track_info:
+            track_info['title'] = track_info.get('name', 'Unknown Track').split(' - ')[0]
+        
+        if 'artists' not in track_info:
+            track_info['artists'] = ['Unknown Artist']
+            
+        if 'filename' not in track_info:
+            artists_str = ', '.join(track_info['artists']) if isinstance(track_info['artists'], list) else str(track_info['artists'])
+            track_info['filename'] = self.sanitize_filename(f"{track_info['title']} - {artists_str}")
+
         # Define filename early to ensure it's available in error handling
         filename = track_info.get('filename', 'unknown_track')
         
         try:
+            # Add a small delay to avoid rate limiting
+            time.sleep(random.uniform(0.5, 1.5))
+            
             search_query = track_info.get('search_query', '')
             
             # If search_query is missing, create one
@@ -384,12 +423,15 @@ class SpotifyDownloader:
             })
             
             user_agents = [
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:100.0) Gecko/20100101 Firefox/100.0",
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/121.0",
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Safari/605.1.15",
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             ]
             
+            # Enhanced yt-dlp options for better YouTube compatibility
             ydl_opts = {
                 "format": "bestaudio/best",
                 "outtmpl": os.path.join(output_folder, f"{filename}.%(ext)s"),
@@ -404,10 +446,14 @@ class SpotifyDownloader:
                 "no_warnings": False,
                 "noplaylist": True,
                 "socket_timeout": 30,
-                "retries": 3,
-                "fragment_retries": 3,
+                "retries": 10,
+                "fragment_retries": 10,
                 "http_headers": {
-                    "User-Agent": random.choice(user_agents)
+                    "User-Agent": random.choice(user_agents),
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                    "Accept-Language": "en-us,en;q=0.5",
+                    "Sec-Fetch-Mode": "navigate",
+                    "Referer": "https://www.youtube.com/",
                 },
                 "geo_bypass": True,
                 "nocheckcertificate": True,
@@ -416,7 +462,23 @@ class SpotifyDownloader:
                 "prefer_ffmpeg": True,
                 "keepvideo": False,
                 "extract_flat": False,
-                "verbose": False
+                "verbose": False,
+                "compat_opts": ["no-youtube-unavailable-videos"],
+                "extractor_args": {
+                    "youtube": {
+                        "skip": ["dash", "hls"],
+                        "player_client": ["android", "web"],
+                    }
+                },
+                "throttledratelimit": 1000000,
+                "consoletitle": False,
+                # Additional options to handle YouTube restrictions
+                "age_limit": 0,
+                "sleep_interval": 2,
+                "max_sleep_interval": 5,
+                "force-ipv4": True,
+                # Cookie file to help with age restrictions
+                "cookiefile": os.path.join(os.path.expanduser("~"), "yt-cookies.txt") if os.path.exists(os.path.join(os.path.expanduser("~"), "yt-cookies.txt")) else None,
             }
             
             # Check if ffmpeg is available, if not, skip postprocessing
@@ -455,18 +517,35 @@ class SpotifyDownloader:
                     f"{track_info['title']} {', '.join(track_info['artists'])} official audio",
                     f"{track_info['title']} {', '.join(track_info['artists'])} official",
                     f"{track_info['title']} {', '.join(track_info['artists'])}",
-                    f"{track_info['title']} by {', '.join(track_info['artists'])}"
+                    f"{track_info['title']} by {', '.join(track_info['artists'])}",
+                    f"{track_info['title']} {', '.join(track_info['artists'])} lyrics",
+                    f"{track_info['title']} {', '.join(track_info['artists'])} audio",
+                    f"{track_info['title']} {', '.join(track_info['artists'][:1])}",  # Just first artist
                 ]
                 
                 video_url = None
+                video_title = None
                 for query in search_queries:
                     try:
-                        search_result = ydl.extract_info(f"ytsearch1:{query}", download=False)
-                        if search_result and 'entries' in search_result and len(search_result['entries']) > 0:
-                            video_info = search_result['entries'][0]
-                            video_url = video_info.get('webpage_url')
-                            if video_url:
-                                break
+                        # Try both YouTube and YouTube Music
+                        for search_prefix in ["ytsearch1:", "ytmsearch1:"]:
+                            try:
+                                search_result = ydl.extract_info(f"{search_prefix}{query}", download=False)
+                                if search_result and 'entries' in search_result and len(search_result['entries']) > 0:
+                                    video_info = search_result['entries'][0]
+                                    # Skip live streams and videos longer than 15 minutes (for songs)
+                                    if (video_info.get('is_live') or 
+                                        (video_info.get('duration', 0) > 900 and track_info['type'] == 'track')):
+                                        continue
+                                    video_url = video_info.get('webpage_url')
+                                    video_title = video_info.get('title', '')
+                                    if video_url:
+                                        break
+                            except Exception as e:
+                                logger.warning(f"Search query failed: {search_prefix}{query}, error: {e}")
+                                continue
+                        if video_url:
+                            break
                     except Exception as e:
                         logger.warning(f"Search query failed: {query}, error: {e}")
                         continue
@@ -484,6 +563,10 @@ class SpotifyDownloader:
                         "filename": filename
                     }
                 
+                # Update track info with the actual YouTube title for better tracking
+                if video_title:
+                    track_info['youtube_title'] = video_title
+                
                 status_queue.put({
                     'track_number': track_info['track_number'],
                     'status': 'downloading',
@@ -491,24 +574,50 @@ class SpotifyDownloader:
                     'percent': 25
                 })
                 
-                ydl.download([video_url])
+                try:
+                    ydl.download([video_url])
+                except Exception as e:
+                    # If download fails, try alternative approach
+                    logger.warning(f"Standard download failed, trying alternative method: {e}")
+                    try:
+                        # Try with different format selection
+                        ydl_opts_alt = ydl_opts.copy()
+                        ydl_opts_alt['format'] = 'bestaudio'
+                        with yt_dlp.YoutubeDL(ydl_opts_alt) as ydl_alt:
+                            ydl_alt.download([video_url])
+                    except Exception as alt_e:
+                        logger.error(f"Alternative download also failed: {alt_e}")
+                        raise alt_e
                 
                 # Get file size after download
                 file_path = os.path.join(output_folder, f"{filename}.mp3")
                 
                 if not os.path.exists(file_path):
-                    status_queue.put({
-                        'track_number': track_info['track_number'],
-                        'status': 'error',
-                        'message': 'File not found after download',
-                        'percent': 100
-                    })
-                    return {
-                        "status": "error", 
-                        "track": track_info['name'], 
-                        "filename": filename, 
-                        "error": "File not found after download"
-                    }
+                    # Try to find the actual file with a different extension
+                    for ext in ['mp3', 'm4a', 'webm', 'opus']:
+                        alt_path = os.path.join(output_folder, f"{filename}.{ext}")
+                        if os.path.exists(alt_path):
+                            file_path = alt_path
+                            # Rename to .mp3 if needed
+                            if ext != 'mp3':
+                                new_path = os.path.join(output_folder, f"{filename}.mp3")
+                                shutil.move(alt_path, new_path)
+                                file_path = new_path
+                            break
+                    
+                    if not os.path.exists(file_path):
+                        status_queue.put({
+                            'track_number': track_info['track_number'],
+                            'status': 'error',
+                            'message': 'File not found after download',
+                            'percent': 100
+                        })
+                        return {
+                            "status": "error", 
+                            "track": track_info['name'], 
+                            "filename": filename, 
+                            "error": "File not found after download"
+                        }
                 
                 # Add metadata to the downloaded file
                 try:
@@ -538,12 +647,18 @@ class SpotifyDownloader:
             error_msg = str(e)
             logger.error(f"Download error: {error_msg}")
             
-            if any(err in error_msg.lower() for err in ["403", "429", "connection", "timeout"]) and retry_count < 3:
+            # Check if it's a recoverable error
+            recoverable_errors = [
+                "403", "429", "connection", "timeout", "precondition", "bad request", 
+                "signature", "unavailable", "too many requests", "http error", "extractor"
+            ]
+            
+            if any(err in error_msg.lower() for err in recoverable_errors) and retry_count < 5:
                 wait_time = (2 ** retry_count) + random.uniform(0, 1)
                 status_queue.put({
                     'track_number': track_info['track_number'],
                     'status': 'retrying',
-                    'message': f'Retry {retry_count+1}/3',
+                    'message': f'Retry {retry_count+1}/5',
                     'percent': 0
                 })
                 time.sleep(wait_time)
@@ -552,7 +667,7 @@ class SpotifyDownloader:
             status_queue.put({
                 'track_number': track_info['track_number'],
                 'status': 'error',
-                'message': f'Error: {error_msg[:50]}...',
+                'message': f'Error: {error_msg[:50]}...', 
                 'percent': 100
             })
             return {
@@ -582,24 +697,30 @@ def download_worker(tracks, download_id, quality='192', content_name='download')
     }
     download_manager['files'][download_id] = []  # Store filenames for this session
     
+    # Ensure all tracks have a track_number and proper name
+    for i, track in enumerate(tracks, 1):
+        if 'track_number' not in track:
+            track['track_number'] = i
+        
+        # Ensure each track has a proper name
+        if 'name' not in track or track['name'].startswith('Track '):
+            if 'title' in track and 'artists' in track:
+                track['name'] = f"{track['title']} - {', '.join(track['artists'])}"
+            else:
+                track['name'] = f"Track {i}"
+    
     # Create a folder for this download session
     session_folder = os.path.join(app.config['DOWNLOAD_FOLDER'], str(download_id))
     os.makedirs(session_folder, exist_ok=True)
     
-    # Initialize progress - FIXED VERSION
+    # Initialize progress
     for track in tracks:
-        # Ensure the track_number key exists before accessing it
-        if download_id not in download_manager['progress']:
-            download_manager['progress'][download_id] = {}
-        
-        # Use setdefault to ensure the track_number entry exists
-        download_manager['progress'][download_id].setdefault(track['track_number'], {
+        download_manager['progress'][download_id][track['track_number']] = {
             'status': 'waiting',
             'message': 'Waiting...', 
             'details': '',
             'percent': 0
-        })
-    
+        }
     
     downloader = SpotifyDownloader()
     status_queue = download_manager['status_queue']
@@ -640,7 +761,8 @@ def download_worker(tracks, download_id, quality='192', content_name='download')
         return result
     
     # Start downloading with more workers for faster downloads
-    with ThreadPoolExecutor(max_workers=min(4, len(tracks))) as executor:
+    max_workers = min(3, len(tracks))  # Reduced to avoid overwhelming YouTube
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = [executor.submit(download_with_tracking, track) for track in tracks]
         
         for future in as_completed(futures):
@@ -714,14 +836,26 @@ def start_download():
     
     if not tracks:
         return jsonify({'error': 'No tracks selected'}), 400
-    
+
+    # Add track numbers if they are missing (e.g., from search)
+    for i, track in enumerate(tracks):
+        if 'track_number' not in track:
+            track['track_number'] = i + 1
+
     download_id = int(time.time() * 1000)  # Unique ID for this download
-    
+
+    # Get content name for zip file
+    content_name = "download"
+    if tracks and 'album' in tracks[0]:
+        content_name = tracks[0]['album']
+    elif tracks and 'artists' in tracks[0]:
+        content_name = f"{tracks[0]['artists'][0]} - Tracks"
+
     # Start download in background thread
-    thread = threading.Thread(target=download_worker, args=(tracks, download_id, quality, "download"))
+    thread = threading.Thread(target=download_worker, args=(tracks, download_id, quality, content_name))
     thread.daemon = True
     thread.start()
-    
+
     return jsonify({'download_id': download_id, 'message': 'Download started'})
 
 @app.route('/api/progress')
@@ -774,13 +908,15 @@ def callback():
         if not code:
             return "Authentication failed: No authorization code received", 400
         
+        cache_path = os.path.join(CACHE_FOLDER, '.spotify_cache')
+        
         # Create the auth manager to exchange the code for a token
         auth_manager = SpotifyOAuth(
             client_id=os.environ.get('SPOTIFY_CLIENT_ID'),
             client_secret=os.environ.get('SPOTIFY_CLIENT_SECRET'),
             redirect_uri=os.environ.get('SPOTIFY_REDIRECT_URI', 'http://localhost:5005/callback'),
             scope=SPOTIFY_SCOPE,
-            cache_path=os.path.join(CACHE_FOLDER, '.spotify_cache')
+            cache_path=cache_path
         )
         
         # Exchange the code for an access token
@@ -861,7 +997,7 @@ def list_downloads():
             session_path = os.path.join(download_folder, session_id)
             if os.path.isdir(session_path):
                 for file in os.listdir(session_path):
-                    if file.endswith('.mp3'):
+                    if file.endswith('.mp3') or file.endswith('.m4a') or file.endswith('.webm'):
                         file_path = os.path.join(session_path, file)
                         file_size = os.path.getsize(file_path)
                         files.append({
@@ -937,7 +1073,7 @@ def get_my_saved_tracks():
                     track_info = {
                         'name': f"{track_name} - {artists}",
                         'title': track_name,
-                        'artists': artists,
+                        'artists': [artist['name'] for artist in track['artists']],
                         'album': album_name,
                         'filename': safe_filename,
                         'search_query': f"{track_name} {artists} official audio",
@@ -1104,21 +1240,80 @@ def retry_download():
     
     return jsonify({'message': 'Download queued for retry'})
 
-if __name__ == '__main__':
-    # Set these environment variables or replace with your actual credentials
-    if not os.environ.get('SPOTIFY_CLIENT_ID'):
-        os.environ['SPOTIFY_CLIENT_ID'] = 'your_spotify_client_id'
-    if not os.environ.get('SPOTIFY_CLIENT_SECRET'):
-        os.environ['SPOTIFY_CLIENT_SECRET'] = 'your_spotify_client_secret'
-    if not os.environ.get('SPOTIFY_REDIRECT_URI'):
-        os.environ['SPOTIFY_REDIRECT_URI'] = 'http://localhost:5005/callback'
-    
-    # Change the port to 5005
+def check_ffmpeg():
+    """Check if FFmpeg is available"""
+    if not shutil.which('ffmpeg'):
+        logger.warning("FFmpeg not found. Audio conversion will be disabled.")
+        return False
+    return True
+
+def update_yt_dlp():
+    """Update yt-dlp to the latest version"""
     try:
-        app.run(debug=True, host='0.0.0.0', port=5005)
+        result = subprocess.run([sys.executable, "-m", "pip", "install", "--upgrade", "yt-dlp"], 
+                              capture_output=True, text=True)
+        if result.returncode == 0:
+            logger.info("yt-dlp updated successfully")
+            return True
+        else:
+            logger.error(f"Failed to update yt-dlp: {result.stderr}")
+            return False
+    except Exception as e:
+        logger.error(f"Error updating yt-dlp: {e}")
+        return False
+
+def cleanup_old_downloads(days=7):
+    """Clean up download files older than specified days"""
+    try:
+        now = time.time()
+        download_folder = app.config['DOWNLOAD_FOLDER']
+        
+        for filename in os.listdir(download_folder):
+            file_path = os.path.join(download_folder, filename)
+            if os.path.isfile(file_path):
+                # Delete files older than specified days
+                if os.stat(file_path).st_mtime < now - days * 86400:
+                    os.remove(file_path)
+                    logger.info(f"Deleted old file: {filename}")
+            
+            # Also clean up session folders
+            elif os.path.isdir(file_path) and filename.isdigit():
+                if os.path.stat(file_path).st_mtime < now - days * 86400:
+                    shutil.rmtree(file_path)
+                    logger.info(f"Deleted old session: {filename}")
+                    
+    except Exception as e:
+        logger.error(f"Error during cleanup: {e}")
+
+# Start a background thread for cleanup
+def start_cleanup_thread():
+    """Start a background thread to clean up old files"""
+    def cleanup_loop():
+        while True:
+            time.sleep(24 * 60 * 60)  # Run once per day
+            cleanup_old_downloads()
+    
+    thread = threading.Thread(target=cleanup_loop, daemon=True)
+    thread.start()
+
+# Start the cleanup thread when the app starts
+start_cleanup_thread()
+
+if __name__ == '__main__':
+    # Check if FFmpeg is available
+    check_ffmpeg()
+    
+    # Update yt-dlp on startup
+    update_yt_dlp()
+    
+    # Get port from environment or use default
+    port = int(os.environ.get('PORT', 5005))
+    
+    try:
+        app.run(debug=False, host='0.0.0.0', port=port)
     except OSError as e:
         if e.errno == 98:  # Address already in use
-            print("Port 5005 is also in use. Trying port 5006...")
-            app.run(debug=True, host='0.0.0.0', port=5006)
+            logger.warning(f"Port {port} is in use. Trying port {port+1}...")
+            app.run(debug=False, host='0.0.0.0', port=port+1)
         else:
             raise
